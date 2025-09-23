@@ -56,11 +56,9 @@ const refreshAccessToken = async () => {
 
         return newAccessToken;
     } catch (error) {
-        //clearTokens();
-        //window.location.href = '/login';
-        //throw error;
-
-        console.log(error);
+        clearTokens();
+        window.location.href = '/login';
+        throw error;
     }
 };
 
