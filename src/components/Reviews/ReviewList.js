@@ -242,7 +242,7 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, truncateText }) 
 
             <div style={styles.footer}>
                 <small style={styles.date}>
-                    {new Date(review.created_at).toLocaleDateString('ru-RU', {
+                    {new Date(review.reviewed_at).toLocaleDateString('ru-RU', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric'

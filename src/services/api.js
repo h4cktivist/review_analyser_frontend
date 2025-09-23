@@ -62,4 +62,13 @@ export const reviewsAPI = {
     },
 };
 
+export const importAPI = {
+    importGISReviews: async (institutionId) => {
+        const response = await api.post('/import-gis-reviews/', {
+            institution_id: institutionId
+        });
+        return response.data;
+    },
+};
+
 export default api;

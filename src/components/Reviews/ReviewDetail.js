@@ -85,7 +85,7 @@ function ReviewDetail() {
                     </div>
 
                     <div style={styles.date}>
-                        {new Date(review.created_at).toLocaleDateString('ru-RU', {
+                        {new Date(review.reviewed_at).toLocaleDateString('ru-RU', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',

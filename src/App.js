@@ -8,6 +8,7 @@ import EventList from './components/Events/EventList';
 import ReviewList from './components/Reviews/ReviewList';
 import './App.css';
 import ReviewDetail from "./components/Reviews/ReviewDetail";
+import InstitutionDetail from "./components/Institutions/InstitutionDetail";
 
 // Компонент для защиты маршрутов
 const ProtectedRoute = ({ children }) => {
@@ -62,6 +63,14 @@ function App() {
                     </ProtectedRoute>
                 }
             />
+            <Route
+                path="/institutions/:id"
+                element={
+                  <ProtectedRoute>
+                    <InstitutionDetail />
+                  </ProtectedRoute>
+                  }
+              />
           </Routes>
         </div>
       </Router>
