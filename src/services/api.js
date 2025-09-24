@@ -148,6 +148,21 @@ export const institutionsAPI = {
         const response = await api.get(`/institutions/${id}/`);
         return response.data;
     },
+
+    create: async (institutionData) => {
+        const response = await api.post('/institutions/', institutionData);
+        return response.data;
+    },
+
+    update: async (id, institutionData) => {
+        const response = await api.put(`/institutions/${id}/`, institutionData);
+        return response.data;
+    },
+
+    delete: async (id) => {
+        const response = await api.delete(`/institutions/${id}/`);
+        return response.data;
+    },
 };
 
 export const eventsAPI = {

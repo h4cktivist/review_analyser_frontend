@@ -27,7 +27,6 @@ function Register() {
         setLoading(true);
         setError('');
 
-        // Проверка совпадения паролей
         if (formData.password !== formData.password2) {
             setError('Пароли не совпадают');
             setLoading(false);

@@ -241,6 +241,9 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, truncateText }) 
             )}
 
             <div style={styles.footer}>
+                <small style={styles.institutionName}>
+                    🏛️ {review.institution_name || 'Неизвестное учреждение'}
+                </small>
                 <small style={styles.date}>
                     {new Date(review.reviewed_at).toLocaleDateString('ru-RU', {
                         day: 'numeric',
@@ -248,9 +251,6 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, truncateText }) 
                         year: 'numeric'
                     })}
                 </small>
-                <Link to={`/reviews/${review.id}`} style={styles.detailLink}>
-                    Подробнее →
-                </Link>
             </div>
         </div>
     );
@@ -354,9 +354,14 @@ const styles = {
         paddingTop: '1rem',
         marginTop: 'auto',
     },
+    institutionName: {
+        color: '#7f8c8d',
+        fontSize: '0.8rem',
+        fontWeight: '600',
+    },
     date: {
         color: '#7f8c8d',
-        fontSize: '0.9rem',
+        fontSize: '0.8rem',
     },
     detailLink: {
         color: '#3498db',
