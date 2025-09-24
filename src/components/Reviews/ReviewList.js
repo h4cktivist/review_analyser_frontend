@@ -1,16 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { reviewsAPI } from '../../services/api';
+import {institutionsAPI, reviewsAPI} from '../../services/api';
 
 function ReviewList() {
     const [allReviews, setAllReviews] = useState([]);
-    const [currentReviews, setCurrentReviews] = useState([]);
+    let [currentReviews, setCurrentReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [reviewsPerPage] = useState(6);
+    const [filters, setFilters] = useState({
+        sentiment: '',
+        institution: ''
+    });
+    const [institutions, setInstitutions] = useState([]);
 
     const MAX_TEXT_LENGTH = 150;
+
+    useEffect(() => {
+        const fetchInstitutions = async () => {
+            try {
+                const data = await institutionsAPI.getAll();
+                setInstitutions(data);
+            } catch (err) {
+                console.error('Error fetching institutions:', err);
+            }
+        };
+
+        fetchInstitutions();
+    }, []);
 
     useEffect(() => {
         const fetchReviews = async () => {
@@ -55,7 +73,26 @@ function ReviewList() {
         }
     };
 
-    const totalPages = Math.ceil(allReviews.length / reviewsPerPage);
+    const filterReviews = (reviews) => {
+        return reviews.filter(review => {
+            if (filters.sentiment && review.sentiment !== filters.sentiment) {
+                return false;
+            }
+
+            if (filters.institution && review.institution !== parseInt(filters.institution)) {
+                return false;
+            }
+
+            return true;
+        });
+    };
+
+    const filteredReviews = filterReviews(allReviews);
+    const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage);
+    currentReviews = filteredReviews.slice(
+        (currentPage - 1) * reviewsPerPage,
+        currentPage * reviewsPerPage
+    );
 
     const goToPage = (page) => {
         setCurrentPage(page);
@@ -101,11 +138,63 @@ function ReviewList() {
         <div style={styles.container}>
             <h2>Отзывы посетителей</h2>
 
-            {/* Информация о пагинации */}
-            <div style={styles.paginationInfo}>
-                Показано {currentReviews.length} из {allReviews.length} отзывов
-                {totalPages > 1 && (
-                    <span style={styles.pageInfo}> - Страница {currentPage} из {totalPages}</span>
+            <div style={styles.filters}>
+                <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Тональность:</label>
+                    <select
+                        value={filters.sentiment}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, sentiment: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    >
+                        <option value="">Все</option>
+                        <option value="положительный">Положительные</option>
+                        <option value="отрицательный">Отрицательные</option>
+                        <option value="спам">Спам</option>
+                    </select>
+                </div>
+
+                <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Учреждение:</label>
+                    <select
+                        value={filters.institution}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, institution: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    >
+                        <option value="">Все</option>
+                        {institutions.map(inst => (
+                            <option key={inst.id} value={inst.id}>
+                                {inst.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {(filters.sentiment || filters.institution) && (
+                    <button
+                        onClick={() => {
+                            setFilters({ sentiment: '', institution: '' });
+                            setCurrentPage(1);
+                        }}
+                        style={styles.clearButton}
+                    >
+                        Очистить фильтры
+                    </button>
+                )}
+            </div>
+
+            {/* Добавь информацию о результатах фильтрации */}
+            <div style={styles.filterInfo}>
+                Найдено отзывов: {filteredReviews.length}
+                {(filters.sentiment || filters.institution) && (
+                    <span style={styles.activeFilters}>
+      (отфильтровано)
+    </span>
                 )}
             </div>
 
@@ -436,6 +525,60 @@ const styles = {
         color: '#7f8c8d',
         fontSize: '1.1rem',
         gridColumn: '1 / -1',
+    },
+    filters: {
+        display: 'flex',
+        gap: '2rem',
+        alignItems: 'flex-end',
+        marginTop: '3rem',
+        marginBottom: '1rem',
+        padding: '1.5rem',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        flexWrap: 'wrap',
+    },
+    filterGroup: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        minWidth: '200px',
+    },
+    filterLabel: {
+        fontWeight: '600',
+        color: '#2c3e50',
+        fontSize: '0.9rem',
+    },
+    select: {
+        padding: '0.75rem',
+        border: '1px solid #ddd',
+        borderRadius: '6px',
+        fontSize: '1rem',
+        backgroundColor: 'white',
+    },
+    clearButton: {
+        padding: '0.75rem 1.5rem',
+        border: '1px solid #e74c3c',
+        backgroundColor: 'white',
+        color: '#e74c3c',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        fontSize: '0.9rem',
+        fontWeight: '600',
+        alignSelf: 'flex-end',
+    },
+    filterInfo: {
+        marginBottom: '1rem',
+        padding: '0.5rem 1rem',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '6px',
+        color: '#7f8c8d',
+        fontSize: '0.9rem',
+    },
+    activeFilters: {
+        color: '#3498db',
+        fontWeight: '600',
+        marginLeft: '0.5rem',
     },
 };
 
