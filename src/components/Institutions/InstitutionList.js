@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { institutionsAPI } from '../../services/api';
 import InstitutionModal from './InstitutionModal';
+import ConfirmModal from '../ConfirmModal';
 
 function InstitutionList() {
     const [institutions, setInstitutions] = useState([]);
@@ -9,6 +10,8 @@ function InstitutionList() {
     const [error, setError] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingInstitution, setEditingInstitution] = useState(null);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [institutionToDelete, setInstitutionToDelete] = useState(null);
 
     useEffect(() => {
         fetchInstitutions();
@@ -37,20 +40,31 @@ function InstitutionList() {
         setIsModalOpen(true);
     };
 
-    const handleDeleteInstitution = async (institution) => {
-        if (window.confirm(`Вы уверены, что хотите удалить учреждение "${institution.name}"?`)) {
-            try {
-                await institutionsAPI.delete(institution.id);
-                await fetchInstitutions(); // Перезагружаем список
-            } catch (err) {
-                setError('Ошибка удаления учреждения');
-                console.error('Delete error:', err);
-            }
+    const handleDeleteClick = (institution) => {
+        setInstitutionToDelete(institution);
+        setIsConfirmModalOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!institutionToDelete) return;
+
+        try {
+            await institutionsAPI.delete(institutionToDelete.id);
+            await fetchInstitutions(); // Перезагружаем список
+            setInstitutionToDelete(null);
+        } catch (err) {
+            setError('Ошибка удаления учреждения');
+            console.error('Delete error:', err);
         }
     };
 
+    const handleDeleteCancel = () => {
+        setInstitutionToDelete(null);
+        setIsConfirmModalOpen(false);
+    };
+
     const handleSaveSuccess = () => {
-        fetchInstitutions();
+        fetchInstitutions(); // Перезагружаем список после сохранения
     };
 
     const handleCloseModal = () => {
@@ -84,7 +98,7 @@ function InstitutionList() {
                                     ✏️
                                 </button>
                                 <button
-                                    onClick={() => handleDeleteInstitution(institution)}
+                                    onClick={() => handleDeleteClick(institution)}
                                     style={styles.deleteButton}
                                     title="Удалить"
                                 >
@@ -145,6 +159,17 @@ function InstitutionList() {
                 onClose={handleCloseModal}
                 institution={editingInstitution}
                 onSave={handleSaveSuccess}
+            />
+
+            {/* Модальное окно подтверждения удаления */}
+            <ConfirmModal
+                isOpen={isConfirmModalOpen}
+                onClose={handleDeleteCancel}
+                onConfirm={handleDeleteConfirm}
+                title="Подтверждение удаления"
+                message={`Вы уверены, что хотите удалить учреждение "${institutionToDelete?.name}"? Это действие нельзя отменить.`}
+                confirmText="Удалить"
+                cancelText="Отмена"
             />
         </div>
     );

@@ -149,11 +149,6 @@ function InstitutionDetail() {
 
             <div style={styles.header}>
                 <h1 style={styles.title}>{institution.name}</h1>
-                <div style={styles.actions}>
-                    <Link to="/reviews" style={styles.actionLink}>
-                        Все отзывы
-                    </Link>
-                </div>
             </div>
 
             <div style={styles.mainInfo}>
@@ -285,8 +280,7 @@ function InstitutionDetail() {
                 {activeTab === 'info' && (
                     <div style={styles.infoContent}>
                         <div style={styles.mapPlaceholder}>
-                            <h4>🗺️ Карта учреждения</h4>
-                            <p>Здесь может быть встроенная карта с расположением учреждения</p>
+                            <h4>🗺️ Учреждение на карте</h4>
                             <div style={styles.mapLinks}>
                                 {institution.gis_map_link && (
                                     <a
