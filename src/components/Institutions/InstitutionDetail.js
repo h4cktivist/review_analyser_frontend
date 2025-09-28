@@ -349,20 +349,28 @@ function InstitutionDetail() {
 
                             {importResult && (
                                 <div style={styles.importResult}>
-                                    <div style={styles.resultSuccess}>
-                                        ✅ Успешно импортировано {importResult.importedCount} новых отзывов из {importResult.source}
-                                    </div>
-                                    <div style={styles.resultActions}>
-                    <span style={styles.resultText}>
-                      Теперь всего отзывов: {importResult.totalCount}
-                    </span>
-                                        <button
-                                            onClick={handleViewReviews}
-                                            style={styles.viewButton}
-                                        >
-                                            Посмотреть
-                                        </button>
-                                    </div>
+                                    {importResult.importedCount > 0 ? (
+                                        <>
+                                            <div style={styles.resultSuccess}>
+                                                ✅ Успешно импортировано {importResult.importedCount} новых отзывов из {importResult.source}
+                                            </div>
+                                            <div style={styles.resultActions}>
+          <span style={styles.resultText}>
+            Теперь всего отзывов: {importResult.totalCount}
+          </span>
+                                                <button
+                                                    onClick={handleViewReviews}
+                                                    style={styles.viewButton}
+                                                >
+                                                    Посмотреть
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div style={styles.importResult}>
+                                            ℹ️ Новых отзывов не найдено
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
