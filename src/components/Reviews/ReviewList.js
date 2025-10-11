@@ -302,7 +302,6 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, truncateText }) 
           {review.sentiment}
         </span>
                 <span style={styles.confidence}>
-          Уверенность: {(review.confidence * 100).toFixed(1)}%
         </span>
             </div>
 

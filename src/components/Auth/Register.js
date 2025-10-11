@@ -109,8 +109,13 @@ function Register() {
             await authAPI.register(formData);
             navigate('/login');
         } catch (err) {
-            setError(err.response?.data?.message || 'Ошибка регистрации. Проверьте введенные данные.');
-            console.error('Registration error:', err);
+            console.log(err);
+            let errorText = 'Ошибка регистрации. Повторите попытку позднее';
+            if (err.status === 400 && 'email' in err.response.data) {
+                errorText = 'Пользователь с таким e-mail уже существует'
+            } else if (err.status === 400 && 'username' in err.response.data)
+                errorText = 'Пользователь с таким именем пользователя уже существует'
+            setError(errorText);
         } finally {
             setLoading(false);
         }
