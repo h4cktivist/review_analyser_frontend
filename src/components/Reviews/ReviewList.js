@@ -66,10 +66,23 @@ function ReviewList() {
 
     const getSentimentColor = (sentiment) => {
         switch (sentiment) {
-            case 'положительный': return '#27ae60';
-            case 'отрицательный': return '#e74c3c';
-            case 'спам': return '#95a5a6';
+            case 'positive': return '#27ae60';
+            case 'negative': return '#e74c3c';
+            case 'spam': return '#95a5a6';
             default: return '#34495e';
+        }
+    };
+
+    const getSentimentText = (sentiment) => {
+        switch(sentiment) {
+            case 'positive':
+                return 'положительный';
+            case 'negative':
+                return 'отрицательный';
+            case 'spam':
+                return 'спам';
+            default:
+                return sentiment;
         }
     };
 
@@ -207,6 +220,7 @@ function ReviewList() {
                             review={review}
                             maxTextLength={MAX_TEXT_LENGTH}
                             getSentimentColor={getSentimentColor}
+                            getSentimentText={getSentimentText}
                             truncateText={truncateText}
                         />
                     ))
@@ -287,7 +301,7 @@ function ReviewList() {
     );
 }
 
-const ReviewCard = ({ review, maxTextLength, getSentimentColor, truncateText }) => {
+const ReviewCard = ({ review, maxTextLength, getSentimentColor, getSentimentText, truncateText }) => {
     const isTextLong = review.text && review.text.length > maxTextLength;
 
     return (
@@ -299,7 +313,7 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, truncateText }) 
                 backgroundColor: getSentimentColor(review.sentiment)
             }}
         >
-          {review.sentiment}
+          {getSentimentText(review.sentiment)}
         </span>
                 <span style={styles.confidence}>
         </span>
