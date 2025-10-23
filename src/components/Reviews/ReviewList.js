@@ -14,6 +14,7 @@ function ReviewList() {
         institution: ''
     });
     const [institutions, setInstitutions] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const MAX_TEXT_LENGTH = 150;
 
@@ -100,6 +101,16 @@ function ReviewList() {
         });
     };
 
+    const searchReviews = async (searchText) => {
+        try {
+            const data = await reviewsAPI.searchByText(searchText);
+            setAllReviews(data);
+        } catch (err) {
+            setError('Ошибка загрузки отзывов');
+            console.error('Error searching reviews:', err);
+        }
+    }
+
     const filteredReviews = filterReviews(allReviews);
     const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage);
     currentReviews = filteredReviews.slice(
@@ -150,6 +161,27 @@ function ReviewList() {
     return (
         <div style={styles.container}>
             <h2>Отзывы посетителей</h2>
+
+            <div style={styles.searchContainer}>
+                <input
+                    type="text"
+                    placeholder="Поиск по отзывам..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            searchReviews(searchQuery);
+                        }
+                    }}
+                    style={styles.searchInput}
+                />
+                <button
+                    onClick={() => searchReviews(searchQuery)}
+                    style={styles.searchButton}
+                >
+                    Поиск
+                </button>
+            </div>
 
             <div style={styles.filters}>
                 <div style={styles.filterGroup}>
@@ -592,6 +624,34 @@ const styles = {
         color: '#3498db',
         fontWeight: '600',
         marginLeft: '0.5rem',
+    },
+    searchContainer: {
+        display: 'flex',
+        gap: '2rem',
+        alignItems: 'flex-end',
+        marginTop: '3rem',
+        marginBottom: '1rem',
+        padding: '1.5rem',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        flexWrap: 'wrap',
+    },
+    searchInput: {
+        flex: 1,
+        padding: '8px 12px',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        fontSize: '14px'
+    },
+    searchButton: {
+        padding: '8px 16px',
+        backgroundColor: '#007bff',
+        color: 'white',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontSize: '14px'
     },
 };
 

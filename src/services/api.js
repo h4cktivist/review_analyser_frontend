@@ -202,6 +202,11 @@ export const reviewsAPI = {
         const response = await api.get(`/reviews/${id}/`);
         return response.data;
     },
+
+    searchByText: async (text) => {
+        const response = await api.get(`reviews/search/?q=${text}`);
+        return response.data.results;
+    }
 };
 
 export const importAPI = {
