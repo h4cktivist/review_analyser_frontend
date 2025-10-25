@@ -44,18 +44,31 @@ function ReviewDetail() {
 
     const getSentimentColor = (sentiment) => {
         switch (sentiment) {
-            case 'положительный': return '#27ae60';
-            case 'отрицательный': return '#e74c3c';
-            case 'спам': return '#95a5a6';
+            case 'positive': return '#27ae60';
+            case 'negative': return '#e74c3c';
+            case 'neutral': return '#95a5a6';
             default: return '#34495e';
+        }
+    };
+
+    const getSentimentText = (sentiment) => {
+        switch(sentiment) {
+            case 'positive':
+                return 'положительный';
+            case 'negative':
+                return 'отрицательный';
+            case 'neutral':
+                return 'нейтральный';
+            default:
+                return sentiment;
         }
     };
 
     const getSentimentIcon = (sentiment) => {
         switch (sentiment) {
-            case 'положительный': return '👍';
-            case 'отрицательный': return '👎';
-            case 'спам': return '🚫';
+            case 'positive': return '👍';
+            case 'negative': return '👎';
+            case 'neutral': return '🚫';
             default: return '📝';
         }
     };
@@ -77,7 +90,7 @@ function ReviewDetail() {
                     backgroundColor: getSentimentColor(review.sentiment)
                 }}
             >
-              {getSentimentIcon(review.sentiment)} {review.sentiment}
+              {getSentimentIcon(review.sentiment)} {getSentimentText(review.sentiment)}
             </span>
                         <span style={styles.confidence}>
               Уверенность модели: {(review.confidence * 100).toFixed(1)}%
@@ -129,7 +142,6 @@ function ReviewDetail() {
                         <div style={styles.metadataItem}>
                             <strong>Мероприятие:</strong>{' '}
                             <span style={styles.eventName}>{event.name}</span>
-                            <span style={styles.eventType}>({event.type})</span>
                         </div>
                     )}
                 </div>
@@ -231,9 +243,6 @@ const styles = {
     link: {
         color: '#3498db',
         textDecoration: 'none',
-    },
-    eventName: {
-        fontWeight: 'bold',
     },
     eventType: {
         color: '#7f8c8d',

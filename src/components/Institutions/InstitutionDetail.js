@@ -109,10 +109,23 @@ function InstitutionDetail() {
 
     const getSentimentColor = (sentiment) => {
         switch (sentiment) {
-            case 'положительный': return '#27ae60';
-            case 'отрицательный': return '#e74c3c';
-            case 'спам': return '#95a5a6';
+            case 'positive': return '#27ae60';
+            case 'negative': return '#e74c3c';
+            case 'neutral': return '#95a5a6';
             default: return '#34495e';
+        }
+    };
+
+    const getSentimentText = (sentiment) => {
+        switch(sentiment) {
+            case 'positive':
+                return 'положительный';
+            case 'negative':
+                return 'отрицательный';
+            case 'neutral':
+                return 'нейтральный';
+            default:
+                return sentiment;
         }
     };
 
@@ -126,9 +139,9 @@ function InstitutionDetail() {
 
     const getReviewsStats = () => {
         const total = reviews.length;
-        const positive = reviews.filter(r => r.sentiment === 'положительный').length;
-        const negative = reviews.filter(r => r.sentiment === 'отрицательный').length;
-        const spam = reviews.filter(r => r.sentiment === 'спам').length;
+        const positive = reviews.filter(r => r.sentiment === 'positive').length;
+        const negative = reviews.filter(r => r.sentiment === 'negative').length;
+        const spam = reviews.filter(r => r.sentiment === 'neutral').length;
 
         return { total, positive, negative, spam };
     };
@@ -207,7 +220,7 @@ function InstitutionDetail() {
                         </div>
                         <div style={{...styles.statItem, color: '#95a5a6'}}>
                             <span style={styles.statNumber}>{stats.spam}</span>
-                            <span style={styles.statLabel}>Спам</span>
+                            <span style={styles.statLabel}>Нейтальных</span>
                         </div>
                     </div>
                 </div>
@@ -226,7 +239,7 @@ function InstitutionDetail() {
                           backgroundColor: getSentimentColor(review.sentiment)
                       }}
                   >
-                    {review.sentiment}
+                    {getSentimentText(review.sentiment)}
                   </span>
                                     <span style={styles.reviewDate}>
                     {new Date(review.reviewed_at).toLocaleDateString('ru-RU')}
