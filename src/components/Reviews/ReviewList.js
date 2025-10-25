@@ -80,8 +80,8 @@ function ReviewList() {
                 return 'положительный';
             case 'negative':
                 return 'отрицательный';
-            case 'spam':
-                return 'спам';
+            case 'neutral':
+                return 'нейтральный';
             default:
                 return sentiment;
         }
@@ -195,9 +195,9 @@ function ReviewList() {
                         style={styles.select}
                     >
                         <option value="">Все</option>
-                        <option value="положительный">Положительные</option>
-                        <option value="отрицательный">Отрицательные</option>
-                        <option value="спам">Спам</option>
+                        <option value="positive">Положительные</option>
+                        <option value="negative">Отрицательные</option>
+                        <option value="neutral">Нейтальные</option>
                     </select>
                 </div>
 
