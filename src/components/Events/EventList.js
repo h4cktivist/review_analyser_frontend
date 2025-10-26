@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {eventsAPI} from '../../services/api';
 import ConfirmModal from '../ConfirmModal';
 import EventModal from "./EventModal";
+import {Link} from "react-router-dom";
 
 function EventList() {
     const [events, setEvents] = useState([]);
@@ -94,7 +95,11 @@ function EventList() {
                     <tbody>
                     {events.map((event) => (
                         <tr key={event.id}>
-                            <td style={styles.td}>{event.name}</td>
+                            <td style={styles.td}>
+                                <Link to={`/events/${event.id}`} style={styles.detailLink}>
+                                    {event.name}
+                                </Link>
+                            </td>
                             <td style={styles.td}>
                                 {new Date(event.date).toLocaleDateString('ru-RU', {
                                     day: 'numeric',
@@ -220,6 +225,11 @@ const styles = {
         transition: 'background-color 0.2s',
         color: '#e74c3c',
     },
+    detailLink: {
+        textDecoration: 'none',
+        color: 'inherit',
+        outline: 'none'
+    }
 };
 
 export default EventList;
