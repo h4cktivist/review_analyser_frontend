@@ -166,7 +166,7 @@ function InstitutionDetail() {
 
             <div style={styles.mainInfo}>
                 <div style={styles.infoCard}>
-                    <h3 style={styles.infoTitle}>📌 Основная информация</h3>
+                    <h3 style={styles.infoTitle}>Основная информация</h3>
                     <div style={styles.infoGrid}>
                         <div style={styles.infoItem}>
                             <strong>Адрес:</strong>
@@ -204,7 +204,7 @@ function InstitutionDetail() {
                 </div>
 
                 <div style={styles.statsCard}>
-                    <h3 style={styles.infoTitle}>📊 Статистика отзывов</h3>
+                    <h3 style={styles.infoTitle}>Статистика</h3>
                     <div style={styles.statsGrid}>
                         <div style={styles.statItem}>
                             <span style={styles.statNumber}>{stats.total}</span>
@@ -228,7 +228,7 @@ function InstitutionDetail() {
 
             {latestReviews.length > 0 && (
                 <div style={styles.latestReviews}>
-                    <h3 style={styles.sectionTitle}>🔥 Последние отзывы</h3>
+                    <h3 style={styles.sectionTitle}>Последние отзывы</h3>
                     <div style={styles.reviewsGrid}>
                         {latestReviews.map((review) => (
                             <div key={review.id} style={styles.reviewCard}>
@@ -276,7 +276,7 @@ function InstitutionDetail() {
                         ...(activeTab === 'info' ? styles.activeTab : {})
                     }}
                 >
-                    📋 Информация
+                    Информация
                 </button>
                 <button
                     onClick={() => setActiveTab('reviews')}
@@ -285,7 +285,7 @@ function InstitutionDetail() {
                         ...(activeTab === 'reviews' ? styles.activeTab : {})
                     }}
                 >
-                    💬 Управление отзывами
+                    Управление отзывами
                 </button>
             </div>
 
@@ -293,7 +293,7 @@ function InstitutionDetail() {
                 {activeTab === 'info' && (
                     <div style={styles.infoContent}>
                         <div style={styles.mapPlaceholder}>
-                            <h4>🗺️ Учреждение на карте</h4>
+                            <h4>Учреждение на карте</h4>
                             <div style={styles.mapLinks}>
                                 {institution.gis_map_link && (
                                     <a
@@ -323,7 +323,7 @@ function InstitutionDetail() {
                 {activeTab === 'reviews' && (
                     <div style={styles.reviewsContent}>
                         <div style={styles.importSection}>
-                            <h4 style={styles.importTitle}>📥 Импорт отзывов</h4>
+                            <h4 style={styles.importTitle}>Импорт отзывов</h4>
                             <p style={styles.importDescription}>
                                 Загрузите последние отзывы из внешних источников
                             </p>
@@ -355,7 +355,7 @@ function InstitutionDetail() {
                                             Импорт из Яндекс Карт...
                                         </div>
                                     ) : (
-                                        '🔵 Импорт из Яндекс Карт'
+                                        'Импорт из Яндекс Карт'
                                     )}
                                 </button>
                             </div>
@@ -369,7 +369,7 @@ function InstitutionDetail() {
                                             </div>
                                             <div style={styles.resultActions}>
           <span style={styles.resultText}>
-            Теперь всего отзывов: {importResult.totalCount}
+            Всего отзывов: {importResult.totalCount}
           </span>
                                                 <button
                                                     onClick={handleViewReviews}

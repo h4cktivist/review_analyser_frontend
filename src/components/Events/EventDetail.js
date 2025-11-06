@@ -103,7 +103,7 @@ function EventDetail() {
 
             <div style={styles.mainInfo}>
                 <div style={styles.statsCard}>
-                    <h3 style={styles.infoTitle}>📊 Статистика отзывов</h3>
+                    <h3 style={styles.infoTitle}>Статистика</h3>
                     <div style={styles.statsGrid}>
                         <div style={styles.statItem}>
                             <span style={styles.statNumber}>{stats.total}</span>
@@ -127,7 +127,7 @@ function EventDetail() {
 
             {latestReviews.length > 0 && (
                 <div style={styles.latestReviews}>
-                    <h3 style={styles.sectionTitle}>🔥 Последние отзывы</h3>
+                    <h3 style={styles.sectionTitle}>Последние отзывы</h3>
                     <div style={styles.reviewsGrid}>
                         {latestReviews.map((review) => (
                             <div key={review.id} style={styles.reviewCard}>
@@ -175,7 +175,7 @@ function EventDetail() {
                         ...(activeTab === 'info' ? styles.activeTab : {})
                     }}
                 >
-                    📋 Позитивные и негативные аспекты
+                    Позитивные и негативные аспекты
                 </button>
                 <button
                     onClick={() => setActiveTab('reviews')}
@@ -184,7 +184,7 @@ function EventDetail() {
                         ...(activeTab === 'reviews' ? styles.activeTab : {})
                     }}
                 >
-                    💬 Предлагаемые действия
+                    Предлагаемые действия
                 </button>
             </div>
         </div>
