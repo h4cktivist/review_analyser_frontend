@@ -334,8 +334,6 @@ function ReviewList() {
 }
 
 const ReviewCard = ({ review, maxTextLength, getSentimentColor, getSentimentText, truncateText }) => {
-    const isTextLong = review.text && review.text.length > maxTextLength;
-
     return (
         <div style={styles.card}>
             <div style={styles.header}>
@@ -355,24 +353,26 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, getSentimentText
                 {truncateText(review.text, maxTextLength)}
             </p>
 
-            {isTextLong && (
-                <Link to={`/reviews/${review.id}`} style={styles.readMore}>
-                    Читать полностью
-                </Link>
-            )}
+            <Link to={`/reviews/${review.id}`} style={styles.readMore}>
+                Подробнее
+            </Link>
 
-            {review.keywords && (
-                <div style={styles.keywords}>
-                    <strong>Ключевые слова:</strong>
-                    <div style={styles.keywordsList}>
-                        {review.keywords.map((keyword, index) => (
-                            <span key={index} style={styles.keywordTag}>
-                {keyword.trim()}
-              </span>
+            {review.positive_aspects || review.negative_aspects ? (
+                <div style={styles.aspects}>
+                    <div style={styles.aspectsList}>
+                        {review.positive_aspects?.map((aspect, index) => (
+                            <span key={`positive-${index}`} style={styles.positiveTag}>
+                    {aspect.trim()}
+                </span>
+                        ))}
+                        {review.negative_aspects?.map((aspect, index) => (
+                            <span key={`negative-${index}`} style={styles.negativeTag}>
+                    {aspect.trim()}
+                </span>
                         ))}
                     </div>
                 </div>
-            )}
+            ) : null}
 
             <div style={styles.footer}>
                 <small style={styles.institutionName}>
@@ -463,22 +463,32 @@ const styles = {
         display: 'inline-block',
         fontSize: '0.9rem',
     },
-    keywords: {
-        marginBottom: '1rem',
+    aspects: {
+        marginBottom: '12px',
     },
-    keywordsList: {
+    aspectsList: {
         display: 'flex',
         flexWrap: 'wrap',
-        gap: '0.3rem',
-        marginTop: '0.5rem',
+        gap: '8px',
+        marginTop: '4px',
     },
-    keywordTag: {
-        backgroundColor: '#e3f2fd',
-        color: '#1976d2',
-        padding: '0.2rem 0.6rem',
+    positiveTag: {
+        padding: '4px 8px',
         borderRadius: '12px',
-        fontSize: '0.8rem',
-        border: '1px solid #bbdefb',
+        fontSize: '12px',
+        fontWeight: '500',
+        backgroundColor: '#dcfce7',
+        color: '#166534',
+        border: '1px solid #bbf7d0'
+    },
+    negativeTag: {
+        padding: '4px 8px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: '500',
+        backgroundColor: '#fee2e2',
+        color: '#991b1b',
+        border: '1px solid #fecaca'
     },
     footer: {
         display: 'flex',
