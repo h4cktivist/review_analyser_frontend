@@ -113,18 +113,22 @@ function ReviewDetail() {
                     <p style={styles.reviewText}>{review.text}</p>
                 </div>
 
-                {review.keywords && (
-                    <div style={styles.keywordsSection}>
-                        <h4>Ключевые слова:</h4>
-                        <div style={styles.keywordsList}>
-                            {review.keywords.map((keyword, index) => (
-                                <span key={index} style={styles.keywordTag}>
-                  {keyword.trim()}
+                {review.positive_aspects || review.negative_aspects ? (
+                    <div style={styles.aspects}>
+                        <div style={styles.aspectsList}>
+                            {review.positive_aspects?.map((aspect, index) => (
+                                <span key={`positive-${index}`} style={styles.positiveTag}>
+                    {aspect.trim()}
+                </span>
+                            ))}
+                            {review.negative_aspects?.map((aspect, index) => (
+                                <span key={`negative-${index}`} style={styles.negativeTag}>
+                    {aspect.trim()}
                 </span>
                             ))}
                         </div>
                     </div>
-                )}
+                ) : null}
 
                 <div style={styles.metadata}>
                     <div style={styles.metadataItem}>
@@ -219,18 +223,32 @@ const styles = {
         backgroundColor: '#f8f9fa',
         borderRadius: '8px',
     },
-    keywordsList: {
+    aspects: {
+        marginBottom: '12px',
+    },
+    aspectsList: {
         display: 'flex',
         flexWrap: 'wrap',
-        gap: '0.5rem',
-        marginTop: '0.5rem',
+        gap: '8px',
+        marginTop: '4px',
     },
-    keywordTag: {
-        backgroundColor: '#3498db',
-        color: 'white',
-        padding: '0.3rem 0.8rem',
-        borderRadius: '15px',
-        fontSize: '0.9rem',
+    positiveTag: {
+        padding: '4px 8px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: '500',
+        backgroundColor: '#dcfce7',
+        color: '#166534',
+        border: '1px solid #bbf7d0'
+    },
+    negativeTag: {
+        padding: '4px 8px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: '500',
+        backgroundColor: '#fee2e2',
+        color: '#991b1b',
+        border: '1px solid #fecaca'
     },
     metadata: {
         borderTop: '1px solid #eee',
