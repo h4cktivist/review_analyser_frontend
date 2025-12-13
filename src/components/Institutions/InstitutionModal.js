@@ -3,10 +3,14 @@ import { institutionsAPI } from '../../services/api';
 
 function InstitutionModal({ isOpen, onClose, institution, onSave }) {
     const [formData, setFormData] = useState({
-        name: '',
-        address: '',
-        gis_map_link: '',
-        yandex_map_link: ''
+        name: null,
+        address: null,
+        gis_map_link: null,
+        yandex_map_link: null,
+        otzovik_link: null,
+        vk_link: null,
+        telegram_link: null,
+        ok_link: null,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -14,17 +18,25 @@ function InstitutionModal({ isOpen, onClose, institution, onSave }) {
     useEffect(() => {
         if (institution) {
             setFormData({
-                name: institution.name || '',
-                address: institution.address || '',
-                gis_map_link: institution.gis_map_link || '',
-                yandex_map_link: institution.yandex_map_link || ''
+                name: institution.name || null,
+                address: institution.address || null,
+                gis_map_link: institution.gis_map_link || null,
+                yandex_map_link: institution.yandex_map_link || null,
+                otzovik_link: institution.otzovik_link || null,
+                vk_link: institution.vk_link || null,
+                telegram_link: institution.telegram_link || null,
+                ok_link: institution.ok_link || null,
             });
         } else {
             setFormData({
-                name: '',
-                address: '',
-                gis_map_link: '',
-                yandex_map_link: ''
+                name: null,
+                address: null,
+                gis_map_link: null,
+                yandex_map_link: null,
+                otzovik_link: null,
+                vk_link: null,
+                telegram_link: null,
+                ok_link: null,
             });
         }
         setError('');
@@ -38,8 +50,29 @@ function InstitutionModal({ isOpen, onClose, institution, onSave }) {
         }));
     };
 
+    const hasAtLeastOneLink = (data) => {
+        const linkFields = [
+            'gis_map_link',
+            'yandex_map_link',
+            'otzovik_link',
+            'vk_link',
+            'telegram_link',
+            'ok_link'
+        ];
+
+        return linkFields.some(field =>
+            data[field] && data[field].trim() !== ''
+        );
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!hasAtLeastOneLink(formData)) {
+            setError('Необходимо заполнить хотя бы одну ссылку (на карты или соц. сеть)');
+            return;
+        }
+
         setLoading(true);
         setError('');
 
@@ -116,7 +149,7 @@ function InstitutionModal({ isOpen, onClose, institution, onSave }) {
 
                     <div style={styles.formGroup}>
                         <label htmlFor="gis_map_link" style={styles.label}>
-                            Ссылка на 2GIS *
+                            Ссылка на 2GIS
                         </label>
                         <input
                             type="url"
@@ -124,7 +157,6 @@ function InstitutionModal({ isOpen, onClose, institution, onSave }) {
                             name="gis_map_link"
                             value={formData.gis_map_link}
                             onChange={handleChange}
-                            required
                             style={styles.input}
                             placeholder="https://2gis.ru/..."
                         />
@@ -132,7 +164,7 @@ function InstitutionModal({ isOpen, onClose, institution, onSave }) {
 
                     <div style={styles.formGroup}>
                         <label htmlFor="yandex_map_link" style={styles.label}>
-                            Ссылка на Яндекс Карты *
+                            Ссылка на Яндекс Карты
                         </label>
                         <input
                             type="url"
@@ -140,9 +172,68 @@ function InstitutionModal({ isOpen, onClose, institution, onSave }) {
                             name="yandex_map_link"
                             value={formData.yandex_map_link}
                             onChange={handleChange}
-                            required
                             style={styles.input}
                             placeholder="https://yandex.ru/maps/..."
+                        />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                        <label htmlFor="otzovik_link" style={styles.label}>
+                            Ссылка на Отзовик
+                        </label>
+                        <input
+                            type="url"
+                            id="otzovik_link"
+                            name="otzovik_link"
+                            value={formData.otzovik_link}
+                            onChange={handleChange}
+                            style={styles.input}
+                            placeholder="https://otzovik.com/reviews/..."
+                        />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                        <label htmlFor="vk_link" style={styles.label}>
+                            Ссылка на группу ВКонтакте
+                        </label>
+                        <input
+                            type="url"
+                            id="vk_link"
+                            name="vk_link"
+                            value={formData.vk_link}
+                            onChange={handleChange}
+                            style={styles.input}
+                            placeholder="https://vk.com/..."
+                        />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                        <label htmlFor="telegram_link" style={styles.label}>
+                            Ссылка на канал в Telegram
+                        </label>
+                        <input
+                            type="url"
+                            id="telegram_link"
+                            name="telegram_link"
+                            value={formData.telegram_link}
+                            onChange={handleChange}
+                            style={styles.input}
+                            placeholder="https://t.me/..."
+                        />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                        <label htmlFor="ok_link" style={styles.label}>
+                            Ссылка на группу в Одноклассниках
+                        </label>
+                        <input
+                            type="url"
+                            id="ok_link"
+                            name="ok_link"
+                            value={formData.ok_link}
+                            onChange={handleChange}
+                            style={styles.input}
+                            placeholder="https://ok.ru/..."
                         />
                     </div>
 
