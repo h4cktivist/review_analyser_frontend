@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {institutionsAPI, reviewsAPI} from '../../services/api';
+import {eventsAPI, institutionsAPI, reviewsAPI} from '../../services/api';
 
 function ReviewList() {
     const [allReviews, setAllReviews] = useState([]);
@@ -11,9 +11,13 @@ function ReviewList() {
     const [reviewsPerPage] = useState(6);
     const [filters, setFilters] = useState({
         sentiment: '',
-        institution: ''
+        institution: '',
+        event: '',
+        dateFrom: '',
+        dateTo: '',
     });
     const [institutions, setInstitutions] = useState([]);
+    const [events, setEvents] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
 
     const MAX_TEXT_LENGTH = 150;
@@ -29,6 +33,19 @@ function ReviewList() {
         };
 
         fetchInstitutions();
+    }, []);
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const data = await eventsAPI.getAll();
+                setEvents(data);
+            } catch (err) {
+                console.error('Error fetching events:', err);
+            }
+        };
+
+        fetchEvents();
     }, []);
 
     useEffect(() => {
@@ -94,6 +111,18 @@ function ReviewList() {
             }
 
             if (filters.institution && review.institution !== parseInt(filters.institution)) {
+                return false;
+            }
+
+            if (filters.event && review.event !== parseInt(filters.event)) {
+                return false;
+            }
+
+            if (filters.dateFrom && review.reviewed_at < filters.dateFrom) {
+                return false;
+            }
+
+            if (filters.dateTo && review.reviewed_at > filters.dateTo) {
                 return false;
             }
 
@@ -220,10 +249,65 @@ function ReviewList() {
                     </select>
                 </div>
 
-                {(filters.sentiment || filters.institution) && (
+                <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Мероприятие:</label>
+                    <select
+                        value={filters.event}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, event: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    >
+                        <option value="">Все</option>
+                        {events.map(e => (
+                            <option key={e.id} value={e.id}>
+                                {e.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>С:</label>
+                    <input
+                        type="date"
+                        value={filters.dateFrom}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, dateFrom: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    >
+
+                    </input>
+                </div>
+
+                <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>По:</label>
+                    <input
+                        type="date"
+                        value={filters.dateTo}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, dateTo: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    >
+
+                    </input>
+                </div>
+
+                {(filters.sentiment || filters.institution || filters.event || filters.dateFrom) && (
                     <button
                         onClick={() => {
-                            setFilters({ sentiment: '', institution: '' });
+                            setFilters({
+                                sentiment: '',
+                                institution: '',
+                                event: '',
+                                dateFrom: '',
+                                dateTo: '',
+                            });
                             setCurrentPage(1);
                         }}
                         style={styles.clearButton}
@@ -233,7 +317,6 @@ function ReviewList() {
                 )}
             </div>
 
-            {/* Добавь информацию о результатах фильтрации */}
             <div style={styles.filterInfo}>
                 Найдено отзывов: {filteredReviews.length}
                 {(filters.sentiment || filters.institution) && (
