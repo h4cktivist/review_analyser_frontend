@@ -216,6 +216,12 @@ export const importAPI = {
         });
         return response.data;
     },
+    importYandexReviews: async (institutionId) => {
+        const response = await api.post('/import-yandex-reviews/', {
+            institution_id: institutionId
+        });
+        return response.data;
+    },
 };
 
 export default api;

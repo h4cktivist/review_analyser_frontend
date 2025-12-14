@@ -49,17 +49,28 @@ function InstitutionDetail() {
         fetchInstitutionData();
     }, [id]);
 
-    const handleImportFromGIS = async () => {
+    const handleImport = async (source) => {
         try {
-            setImportLoading(prev => ({ ...prev, gis: true }));
             setImportResult(null);
 
-            const response = await importAPI.importGISReviews(id);
-            setImportResult({
-                source: '2GIS',
-                importedCount: response.imported_reviews.length,
-                totalCount: reviews.length + response.imported_reviews.length
-            });
+            if (source === '2GIS') {
+                setImportLoading(prev => ({ ...prev, gis: true }));
+                const response = await importAPI.importGISReviews(id);
+                setImportResult({
+                    source: source,
+                    importedCount: response.imported_reviews.length,
+                    totalCount: reviews.length + response.imported_reviews.length
+                });
+            }
+            else if (source === 'Yandex') {
+                setImportLoading(prev => ({ ...prev, yandex: true }));
+                const response = await importAPI.importYandexReviews(id);
+                setImportResult({
+                    source: source,
+                    importedCount: response.imported_reviews.length,
+                    totalCount: reviews.length + response.imported_reviews.length
+                });
+            }
 
             const allReviews = await reviewsAPI.getAll();
             const institutionReviews = allReviews.filter(
@@ -77,29 +88,6 @@ function InstitutionDetail() {
             console.error('Import error:', err);
         } finally {
             setImportLoading(prev => ({ ...prev, gis: false }));
-        }
-    };
-
-    const handleImportFromYandex = async () => {
-        try {
-            setImportLoading(prev => ({ ...prev, yandex: true }));
-            setImportResult(null);
-
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            setImportResult({
-                source: 'Яндекс Карты',
-                importedCount: 3,
-                totalCount: reviews.length + 3
-            });
-
-            console.log('Импорт из Яндекс Карт для учреждения:', id);
-
-        } catch (err) {
-            setError('Ошибка импорта отзывов из Яндекс Карт');
-            console.error('Yandex import error:', err);
-        } finally {
-            setImportLoading(prev => ({ ...prev, yandex: false }));
         }
     };
 
@@ -330,7 +318,7 @@ function InstitutionDetail() {
 
                             <div style={styles.importButtons}>
                                 <button
-                                    onClick={handleImportFromGIS}
+                                    onClick={() => handleImport('2GIS')}
                                     disabled={importLoading.gis || importLoading.yandex}
                                     style={styles.importButton}
                                 >
@@ -340,12 +328,12 @@ function InstitutionDetail() {
                                             Импорт из 2GIS...
                                         </div>
                                     ) : (
-                                        '🟢 Импорт из 2GIS'
+                                        'Импорт из 2GIS'
                                     )}
                                 </button>
 
                                 <button
-                                    onClick={handleImportFromYandex}
+                                    onClick={() => handleImport('Yandex')}
                                     disabled={importLoading.gis || importLoading.yandex}
                                     style={styles.importButton}
                                 >
