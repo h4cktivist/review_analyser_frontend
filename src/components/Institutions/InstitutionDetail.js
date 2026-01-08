@@ -94,10 +94,13 @@ function InstitutionDetail() {
             setLatestReviews(sortedReviews.slice(0, 3));
 
         } catch (err) {
-            setError('Ошибка импорта отзывов из 2GIS');
+            setError(`Ошибка импорта отзывов из ${source}`);
             console.error('Import error:', err);
         } finally {
-            setImportLoading(prev => ({ ...prev, gis: false }));
+            setImportLoading(prev => (
+                    { ...prev, gis: false, yandex: false, tg: false }
+                )
+            );
         }
     };
 
