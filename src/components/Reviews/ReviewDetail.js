@@ -148,6 +148,11 @@ function ReviewDetail() {
                             <span style={styles.eventName}>{event.name}</span>
                         </div>
                     )}
+
+                    <div style={styles.metadataItem}>
+                        <strong>Источник:</strong>{' '}
+                        <span style={styles.eventName}>{review.source}</span>
+                    </div>
                 </div>
             </div>
         </div>
