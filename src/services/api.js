@@ -222,6 +222,12 @@ export const importAPI = {
         });
         return response.data;
     },
+    importTelegramReviews: async (institutionId) => {
+        const response = await api.post('/import-tg-reviews/', {
+            institution_id: institutionId
+        });
+        return response.data;
+    }
 };
 
 export default api;

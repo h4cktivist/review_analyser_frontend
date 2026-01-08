@@ -13,7 +13,8 @@ function InstitutionDetail() {
     const [activeTab, setActiveTab] = useState('info');
     const [importLoading, setImportLoading] = useState({
         gis: false,
-        yandex: false
+        yandex: false,
+        tg: false,
     });
     const [importResult, setImportResult] = useState(null);
 
@@ -65,6 +66,15 @@ function InstitutionDetail() {
             else if (source === 'Yandex') {
                 setImportLoading(prev => ({ ...prev, yandex: true }));
                 const response = await importAPI.importYandexReviews(id);
+                setImportResult({
+                    source: source,
+                    importedCount: response.imported_reviews.length,
+                    totalCount: reviews.length + response.imported_reviews.length
+                });
+            }
+            else if (source === 'Telegram') {
+                setImportLoading(prev => ({ ...prev, tg: true }));
+                const response = await importAPI.importTelegramReviews(id);
                 setImportResult({
                     source: source,
                     importedCount: response.imported_reviews.length,
@@ -344,6 +354,21 @@ function InstitutionDetail() {
                                         </div>
                                     ) : (
                                         'Импорт из Яндекс Карт'
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => handleImport('Telegram')}
+                                    disabled={importLoading.gis || importLoading.yandex}
+                                    style={styles.importButton}
+                                >
+                                    {importLoading.tg ? (
+                                        <div style={styles.loadingContent}>
+                                            <div style={styles.spinner}></div>
+                                            Импорт из Telegram...
+                                        </div>
+                                    ) : (
+                                        'Импорт из Telegram'
                                     )}
                                 </button>
                             </div>
