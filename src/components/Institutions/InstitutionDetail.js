@@ -15,6 +15,7 @@ function InstitutionDetail() {
         gis: false,
         yandex: false,
         tg: false,
+        vk: false,
     });
     const [importResult, setImportResult] = useState(null);
 
@@ -75,6 +76,15 @@ function InstitutionDetail() {
             else if (source === 'Telegram') {
                 setImportLoading(prev => ({ ...prev, tg: true }));
                 const response = await importAPI.importTelegramReviews(id);
+                setImportResult({
+                    source: source,
+                    importedCount: response.imported_reviews.length,
+                    totalCount: reviews.length + response.imported_reviews.length
+                });
+            }
+            else if (source === 'VK') {
+                setImportLoading(prev => ({ ...prev, vk: true }));
+                const response = await importAPI.importVKReviews(id);
                 setImportResult({
                     source: source,
                     importedCount: response.imported_reviews.length,
@@ -372,6 +382,21 @@ function InstitutionDetail() {
                                         </div>
                                     ) : (
                                         'Импорт из Telegram'
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => handleImport('VK')}
+                                    disabled={importLoading.gis || importLoading.yandex}
+                                    style={styles.importButton}
+                                >
+                                    {importLoading.vk ? (
+                                        <div style={styles.loadingContent}>
+                                            <div style={styles.spinner}></div>
+                                            Импорт из VK...
+                                        </div>
+                                    ) : (
+                                        'Импорт из VK'
                                     )}
                                 </button>
                             </div>

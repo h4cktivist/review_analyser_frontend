@@ -227,6 +227,12 @@ export const importAPI = {
             institution_id: institutionId
         });
         return response.data;
+    },
+    importVKReviews: async (institutionId) => {
+        const response = await api.post('/import-vk-reviews/', {
+            institution_id: institutionId
+        });
+        return response.data;
     }
 };
 
