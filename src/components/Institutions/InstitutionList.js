@@ -12,6 +12,7 @@ function InstitutionList() {
     const [editingInstitution, setEditingInstitution] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [institutionToDelete, setInstitutionToDelete] = useState(null);
+    const isAdmin = localStorage.getItem('is_admin');
 
     useEffect(() => {
         fetchInstitutions();
@@ -89,22 +90,24 @@ function InstitutionList() {
                     <div key={institution.id} style={styles.card}>
                         <div style={styles.cardHeader}>
                             <h3 style={styles.cardTitle}>{institution.name}</h3>
-                            <div style={styles.cardActions}>
-                                <button
-                                    onClick={() => handleEditInstitution(institution)}
-                                    style={styles.editButton}
-                                    title="Редактировать"
-                                >
-                                    ✏️
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteClick(institution)}
-                                    style={styles.deleteButton}
-                                    title="Удалить"
-                                >
-                                    🗑️
-                                </button>
-                            </div>
+                            {isAdmin === "true" && (
+                                <div style={styles.cardActions}>
+                                    <button
+                                        onClick={() => handleEditInstitution(institution)}
+                                        style={styles.editButton}
+                                        title="Редактировать"
+                                    >
+                                        ✏️
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteClick(institution)}
+                                        style={styles.deleteButton}
+                                        title="Удалить"
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <p style={styles.address}>

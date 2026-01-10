@@ -25,7 +25,9 @@ function Login() {
 
         try {
             const response = await authAPI.login(formData.email, formData.password);
+            const p_response = await authAPI.getProfile();
             localStorage.setItem('access_token', response.access);
+            localStorage.setItem('is_admin', p_response.is_superuser);
             navigate('/');
         } catch (err) {
             setError('Ошибка входа. Проверьте email и пароль.');
