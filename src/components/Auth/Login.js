@@ -25,7 +25,7 @@ function Login() {
 
         try {
             const response = await authAPI.login(formData.email, formData.password);
-            localStorage.setItem('token', response.access); // или response.token, смотри что возвращает бэкенд
+            localStorage.setItem('access_token', response.access);
             navigate('/');
         } catch (err) {
             setError('Ошибка входа. Проверьте email и пароль.');

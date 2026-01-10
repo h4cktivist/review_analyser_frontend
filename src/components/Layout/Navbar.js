@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 
 function Navbar() {
     const navigate = useNavigate();
-    const isAuthenticated = localStorage.getItem('token');
+    const isAuthenticated = localStorage.getItem('access_token');
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
         navigate('/login');
     };
 
