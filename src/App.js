@@ -10,6 +10,7 @@ import './App.css';
 import ReviewDetail from "./components/Reviews/ReviewDetail";
 import InstitutionDetail from "./components/Institutions/InstitutionDetail";
 import EventDetail from "./components/Events/EventDetail";
+import Dashboard from "./components/Dashboard/Dashboard";
 
 // Компонент для защиты маршрутов
 const ProtectedRoute = ({ children }) => {
@@ -24,14 +25,11 @@ function App() {
           <Navbar />
 
           <Routes>
-            {/* Главная страница перенаправляет на учреждения */}
-            <Route path="/" element={<Navigate to="/institutions" />} />
+            <Route path="/" element={<Navigate to="/dashboard" />} />
 
-            {/* Публичные маршруты */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* Защищенные маршруты */}
             <Route
                 path="/institutions"
                 element={
@@ -77,6 +75,14 @@ function App() {
                   element={
                       <ProtectedRoute>
                           <EventDetail />
+                      </ProtectedRoute>
+                  }
+              />
+              <Route
+                  path="/dashboard"
+                  element={
+                      <ProtectedRoute>
+                          <Dashboard />
                       </ProtectedRoute>
                   }
               />

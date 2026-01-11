@@ -21,6 +21,7 @@ function Navbar() {
                 <Link to="/institutions" style={styles.link}>Учреждения</Link>
                 <Link to="/events" style={styles.link}>Мероприятия</Link>
                 <Link to="/reviews" style={styles.link}>Отзывы</Link>
+                <Link to="/dashboard" style={styles.link}>Аналитика</Link>
             </div>
 
             <div style={styles.authLinks}>
