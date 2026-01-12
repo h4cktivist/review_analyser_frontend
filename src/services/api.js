@@ -238,6 +238,12 @@ export const importAPI = {
             institution_id: institutionId
         });
         return response.data;
+    },
+    importOtzovikReviews: async (institutionId) => {
+        const response = await api.post('/import-otzovik-reviews/', {
+            institution_id: institutionId
+        });
+        return response.data;
     }
 };
 

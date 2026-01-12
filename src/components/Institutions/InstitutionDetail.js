@@ -16,6 +16,7 @@ function InstitutionDetail() {
         yandex: false,
         tg: false,
         vk: false,
+        otzovik: false,
     });
     const [importResult, setImportResult] = useState(null);
 
@@ -91,6 +92,15 @@ function InstitutionDetail() {
                     totalCount: reviews.length + response.imported_reviews.length
                 });
             }
+            else if (source === 'Otzovik') {
+                setImportLoading(prev => ({ ...prev, otzovik: true }));
+                const response = await importAPI.importOtzovikReviews(id);
+                setImportResult({
+                    source: source,
+                    importedCount: response.imported_reviews.length,
+                    totalCount: reviews.length + response.imported_reviews.length
+                });
+            }
 
             const allReviews = await reviewsAPI.getAll();
             const institutionReviews = allReviews.filter(
@@ -108,7 +118,7 @@ function InstitutionDetail() {
             console.error('Import error:', err);
         } finally {
             setImportLoading(prev => (
-                    { ...prev, gis: false, yandex: false, tg: false }
+                    { ...prev, gis: false, yandex: false, tg: false, otzovik: false }
                 )
             );
         }
@@ -397,6 +407,21 @@ function InstitutionDetail() {
                                         </div>
                                     ) : (
                                         'Импорт из VK'
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => handleImport('Otzovik')}
+                                    disabled={importLoading.gis || importLoading.yandex}
+                                    style={styles.importButton}
+                                >
+                                    {importLoading.otzovik ? (
+                                        <div style={styles.loadingContent}>
+                                            <div style={styles.spinner}></div>
+                                            Импорт из Отзовика...
+                                        </div>
+                                    ) : (
+                                        'Импорт из Отзовика'
                                     )}
                                 </button>
                             </div>
