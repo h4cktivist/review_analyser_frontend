@@ -12,6 +12,7 @@ function EventList() {
     const [editingEvent, setEditingEvent] = useState(null);
     const [eventToDelete, setEventToDelete] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const isAdmin = localStorage.getItem('is_admin');
 
     useEffect(() => {
         fetchEvents();
@@ -89,7 +90,9 @@ function EventList() {
                     <tr>
                         <th style={styles.th}>Название</th>
                         <th style={styles.th}>Дата</th>
-                        <th style={styles.th}>Действия</th>
+                        {isAdmin === "true" && (
+                            <th style={styles.th}>Действия</th>
+                        )}
                     </tr>
                     </thead>
                     <tbody>
@@ -107,22 +110,24 @@ function EventList() {
                                     year: 'numeric'
                                 })}
                             </td>
-                            <td style={styles.td}>
-                                <button
-                                    onClick={() => handleEditEvent(event)}
-                                    style={styles.editButton}
-                                    title="Редактировать"
-                                >
-                                    ✏️
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteEvent(event)}
-                                    style={styles.deleteButton}
-                                    title="Удалить"
-                                >
-                                    🗑️
-                                </button>
-                            </td>
+                            {isAdmin === "true" && (
+                                <td style={styles.td}>
+                                    <button
+                                        onClick={() => handleEditEvent(event)}
+                                        style={styles.editButton}
+                                        title="Редактировать"
+                                    >
+                                        ✏️
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteEvent(event)}
+                                        style={styles.deleteButton}
+                                        title="Удалить"
+                                    >
+                                        🗑️
+                                    </button>
+                                </td>
+                            )}
                         </tr>
                     ))}
                     </tbody>
