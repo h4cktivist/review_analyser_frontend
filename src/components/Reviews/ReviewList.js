@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import {eventsAPI, institutionsAPI, reviewsAPI} from '../../services/api';
+import { eventsAPI, institutionsAPI, reviewsAPI } from '../../services/api';
 
 function ReviewList() {
     const [allReviews, setAllReviews] = useState([]);
@@ -15,6 +15,8 @@ function ReviewList() {
         event: '',
         dateFrom: '',
         dateTo: '',
+        aspectCountMin: '',
+        aspectCountMax: '',
     });
     const [institutions, setInstitutions] = useState([]);
     const [events, setEvents] = useState([]);
@@ -92,7 +94,7 @@ function ReviewList() {
     };
 
     const getSentimentText = (sentiment) => {
-        switch(sentiment) {
+        switch (sentiment) {
             case 'positive':
                 return 'положительный';
             case 'negative':
@@ -123,6 +125,16 @@ function ReviewList() {
             }
 
             if (filters.dateTo && review.reviewed_at > filters.dateTo) {
+                return false;
+            }
+
+            const totalAspects = (review.positive_aspects?.length || 0) + (review.negative_aspects?.length || 0);
+
+            if (filters.aspectCountMin !== '' && totalAspects < parseInt(filters.aspectCountMin)) {
+                return false;
+            }
+
+            if (filters.aspectCountMax !== '' && totalAspects > parseInt(filters.aspectCountMax)) {
                 return false;
             }
 
@@ -298,7 +310,37 @@ function ReviewList() {
                     </input>
                 </div>
 
-                {(filters.sentiment || filters.institution || filters.event || filters.dateFrom) && (
+                <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Аспектов от:</label>
+                    <input
+                        type="number"
+                        min="0"
+                        placeholder="мин"
+                        value={filters.aspectCountMin}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, aspectCountMin: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    />
+                </div>
+
+                <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Аспектов до:</label>
+                    <input
+                        type="number"
+                        min="0"
+                        placeholder="макс"
+                        value={filters.aspectCountMax}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, aspectCountMax: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    />
+                </div>
+
+                {(filters.sentiment || filters.institution || filters.event || filters.dateFrom || filters.aspectCountMin !== '' || filters.aspectCountMax !== '') && (
                     <button
                         onClick={() => {
                             setFilters({
@@ -307,6 +349,8 @@ function ReviewList() {
                                 event: '',
                                 dateFrom: '',
                                 dateTo: '',
+                                aspectCountMin: '',
+                                aspectCountMax: '',
                             });
                             setCurrentPage(1);
                         }}
@@ -319,10 +363,10 @@ function ReviewList() {
 
             <div style={styles.filterInfo}>
                 Найдено отзывов: {filteredReviews.length}
-                {(filters.sentiment || filters.institution) && (
+                {(filters.sentiment || filters.institution || filters.event || filters.dateFrom || filters.aspectCountMin !== '' || filters.aspectCountMax !== '') && (
                     <span style={styles.activeFilters}>
-      (отфильтровано)
-    </span>
+                        (отфильтровано)
+                    </span>
                 )}
             </div>
 
@@ -420,16 +464,16 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, getSentimentText
     return (
         <div style={styles.card}>
             <div style={styles.header}>
-        <span
-            style={{
-                ...styles.sentiment,
-                backgroundColor: getSentimentColor(review.sentiment)
-            }}
-        >
-          {getSentimentText(review.sentiment)}
-        </span>
+                <span
+                    style={{
+                        ...styles.sentiment,
+                        backgroundColor: getSentimentColor(review.sentiment)
+                    }}
+                >
+                    {getSentimentText(review.sentiment)}
+                </span>
                 <span style={styles.confidence}>
-        </span>
+                </span>
             </div>
 
             <p style={styles.text}>
@@ -445,13 +489,13 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, getSentimentText
                     <div style={styles.aspectsList}>
                         {review.positive_aspects?.map((aspect, index) => (
                             <span key={`positive-${index}`} style={styles.positiveTag}>
-                    {aspect.trim()}
-                </span>
+                                {aspect.trim()}
+                            </span>
                         ))}
                         {review.negative_aspects?.map((aspect, index) => (
                             <span key={`negative-${index}`} style={styles.negativeTag}>
-                    {aspect.trim()}
-                </span>
+                                {aspect.trim()}
+                            </span>
                         ))}
                     </div>
                 </div>

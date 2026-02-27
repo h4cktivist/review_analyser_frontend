@@ -5,9 +5,9 @@ import {
     ResponsiveContainer,
     LineChart, Line
 } from "recharts";
-import {TrendingUp, MessageSquare, Smile, Frown, MehIcon} from "lucide-react";
+import { TrendingUp, MessageSquare, Smile, Frown, MehIcon } from "lucide-react";
 import { reviewsAPI } from "../../services/api";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const cardStyle = {
     border: "1px solid #e5e7eb",
@@ -56,7 +56,9 @@ export default function ReviewsDashboard() {
         dateFrom: null,       // ISO string | null
         dateTo: null,         // ISO string | null
         institution: null,    // string | null
-        event: null           // string | null
+        event: null,          // string | null
+        aspectCountMin: null, // number | null
+        aspectCountMax: null, // number | null
     });
 
     useEffect(() => {
@@ -79,6 +81,11 @@ export default function ReviewsDashboard() {
             if (filters.event && r.event_name !== filters.event) return false;
             if (filters.dateFrom && new Date(r.reviewed_at) < new Date(filters.dateFrom)) return false;
             if (filters.dateTo && new Date(r.reviewed_at) > new Date(filters.dateTo)) return false;
+
+            const totalAspects = (r.positive_aspects?.length || 0) + (r.negative_aspects?.length || 0);
+            if (filters.aspectCountMin !== null && totalAspects < filters.aspectCountMin) return false;
+            if (filters.aspectCountMax !== null && totalAspects > filters.aspectCountMax) return false;
+
             return true;
         });
     }, [reviews, filters]);
@@ -95,19 +102,19 @@ export default function ReviewsDashboard() {
         const groupKey = (iso) => {
             const d = new Date(iso);
             if (timeMode === "year") return String(d.getFullYear());
-            if (timeMode === "month") return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-            return iso.slice(0,10);
+            if (timeMode === "month") return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            return iso.slice(0, 10);
         };
 
         filteredReviews.forEach(r => {
             sentimentCount[r.sentiment]++;
-            r.positive_aspects.forEach(a => positiveAspectCount[a] = (positiveAspectCount[a]||0)+1);
-            r.negative_aspects.forEach(a => negativeAspectCount[a] = (negativeAspectCount[a]||0)+1);
+            r.positive_aspects.forEach(a => positiveAspectCount[a] = (positiveAspectCount[a] || 0) + 1);
+            r.negative_aspects.forEach(a => negativeAspectCount[a] = (negativeAspectCount[a] || 0) + 1);
 
             const key = groupKey(r.reviewed_at);
-            byDate[key] = (byDate[key]||0)+1;
+            byDate[key] = (byDate[key] || 0) + 1;
 
-            sourceCount[r.source] = (sourceCount[r.source]||0) + 1;
+            sourceCount[r.source] = (sourceCount[r.source] || 0) + 1;
             institutionCount[r.institution_name] = (institutionCount[r.institution_name] || 0) + 1;
             if (r.event_name) {
                 eventCount[r.event_name] = (eventCount[r.event_name] || 0) + 1;
@@ -115,15 +122,15 @@ export default function ReviewsDashboard() {
         });
 
         return {
-            sentimentData: Object.entries(sentimentCount).map(([name,value])=>({name,value})),
+            sentimentData: Object.entries(sentimentCount).map(([name, value]) => ({ name, value })),
             aspectPolarityData: [
-                { name:"Позитивные аспекты", value:Object.values(positiveAspectCount).reduce((a,b)=>a+b,0)},
-                { name:"Негативные аспекты", value:Object.values(negativeAspectCount).reduce((a,b)=>a+b,0)}
+                { name: "Позитивные аспекты", value: Object.values(positiveAspectCount).reduce((a, b) => a + b, 0) },
+                { name: "Негативные аспекты", value: Object.values(negativeAspectCount).reduce((a, b) => a + b, 0) }
             ],
-            positiveAspects: Object.entries(positiveAspectCount).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value).slice(0,6),
-            negativeAspects: Object.entries(negativeAspectCount).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value).slice(0,6),
-            timeline: Object.entries(byDate).sort((a,b)=>a[0].localeCompare(b[0])).map(([date,value])=>({date,value})),
-            sourceData: Object.entries(sourceCount).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value),
+            positiveAspects: Object.entries(positiveAspectCount).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 6),
+            negativeAspects: Object.entries(negativeAspectCount).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 6),
+            timeline: Object.entries(byDate).sort((a, b) => a[0].localeCompare(b[0])).map(([date, value]) => ({ date, value })),
+            sourceData: Object.entries(sourceCount).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
             institutionData: Object.entries(institutionCount)
                 .map(([name, value]) => ({ name, value }))
                 .sort((a, b) => b.value - a.value),
@@ -154,8 +161,8 @@ export default function ReviewsDashboard() {
                 case "timeline":
                     const d = new Date(r.reviewed_at);
                     if (timeMode === "year") return String(d.getFullYear()) === value;
-                    if (timeMode === "month") return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}` === value;
-                    return r.reviewed_at.slice(0,10) === value;
+                    if (timeMode === "month") return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === value;
+                    return r.reviewed_at.slice(0, 10) === value;
 
                 case "institution":
                     return r.institution_name === value;
@@ -294,6 +301,34 @@ export default function ReviewsDashboard() {
                     </select>
                 </div>
 
+                <div style={{ display: "flex", flexDirection: "column", minWidth: "100px" }}>
+                    <label style={{ marginBottom: "0.25rem", fontWeight: 600, color: "#2c3e50" }}>Аспектов от</label>
+                    <input
+                        type="number"
+                        min="0"
+                        placeholder="мин"
+                        value={filters.aspectCountMin ?? ""}
+                        onChange={(e) =>
+                            setFilters((f) => ({ ...f, aspectCountMin: e.target.value === "" ? null : parseInt(e.target.value) }))
+                        }
+                        style={filterStyle}
+                    />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", minWidth: "100px" }}>
+                    <label style={{ marginBottom: "0.25rem", fontWeight: 600, color: "#2c3e50" }}>Аспектов до</label>
+                    <input
+                        type="number"
+                        min="0"
+                        placeholder="макс"
+                        value={filters.aspectCountMax ?? ""}
+                        onChange={(e) =>
+                            setFilters((f) => ({ ...f, aspectCountMax: e.target.value === "" ? null : parseInt(e.target.value) }))
+                        }
+                        style={filterStyle}
+                    />
+                </div>
+
                 <button
                     onClick={() =>
                         setFilters({
@@ -304,6 +339,8 @@ export default function ReviewsDashboard() {
                             dateTo: null,
                             institution: null,
                             event: null,
+                            aspectCountMin: null,
+                            aspectCountMax: null,
                         })
                     }
                     style={{
@@ -507,10 +544,10 @@ function AspectBar({ title, data, color, polarity, onSelect }) {
             <h3 style={cardTitle}>{title}</h3>
             <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={data}>
-                    <XAxis dataKey="name"/>
-                    <YAxis/>
-                    <Tooltip/>
-                    <Bar dataKey="value" fill={color} onClick={d => onSelect({ name: d.name, polarity })}/>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill={color} onClick={d => onSelect({ name: d.name, polarity })} />
                 </BarChart>
             </ResponsiveContainer>
         </div>
