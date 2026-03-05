@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import {importAPI, institutionsAPI, reviewsAPI} from '../../services/api';
+import { importAPI, institutionsAPI, reviewsAPI } from '../../services/api';
 
 function InstitutionDetail() {
     const { id } = useParams();
@@ -17,6 +17,7 @@ function InstitutionDetail() {
         tg: false,
         vk: false,
         otzovik: false,
+        ok: false,
     });
     const [importResult, setImportResult] = useState(null);
 
@@ -101,6 +102,15 @@ function InstitutionDetail() {
                     totalCount: reviews.length + response.imported_reviews.length
                 });
             }
+            else if (source === 'OK') {
+                setImportLoading(prev => ({ ...prev, ok: true }));
+                const response = await importAPI.importOKReviews(id);
+                setImportResult({
+                    source: source,
+                    importedCount: response.imported_reviews.length,
+                    totalCount: reviews.length + response.imported_reviews.length
+                });
+            }
 
             const allReviews = await reviewsAPI.getAll();
             const institutionReviews = allReviews.filter(
@@ -117,9 +127,8 @@ function InstitutionDetail() {
             setError(`Ошибка импорта отзывов из ${source}`);
             console.error('Import error:', err);
         } finally {
-            setImportLoading(prev => (
-                    { ...prev, gis: false, yandex: false, tg: false, otzovik: false }
-                )
+            setImportLoading(prev =>
+                ({ ...prev, gis: false, yandex: false, tg: false, vk: false, otzovik: false, ok: false })
             );
         }
     };
@@ -138,7 +147,7 @@ function InstitutionDetail() {
     };
 
     const getSentimentText = (sentiment) => {
-        switch(sentiment) {
+        switch (sentiment) {
             case 'positive':
                 return 'положительный';
             case 'negative':
@@ -231,15 +240,15 @@ function InstitutionDetail() {
                             <span style={styles.statNumber}>{stats.total}</span>
                             <span style={styles.statLabel}>Всего отзывов</span>
                         </div>
-                        <div style={{...styles.statItem, color: '#27ae60'}}>
+                        <div style={{ ...styles.statItem, color: '#27ae60' }}>
                             <span style={styles.statNumber}>{stats.positive}</span>
                             <span style={styles.statLabel}>Положительных</span>
                         </div>
-                        <div style={{...styles.statItem, color: '#e74c3c'}}>
+                        <div style={{ ...styles.statItem, color: '#e74c3c' }}>
                             <span style={styles.statNumber}>{stats.negative}</span>
                             <span style={styles.statLabel}>Отрицательных</span>
                         </div>
-                        <div style={{...styles.statItem, color: '#95a5a6'}}>
+                        <div style={{ ...styles.statItem, color: '#95a5a6' }}>
                             <span style={styles.statNumber}>{stats.spam}</span>
                             <span style={styles.statLabel}>Нейтальных</span>
                         </div>
@@ -254,17 +263,17 @@ function InstitutionDetail() {
                         {latestReviews.map((review) => (
                             <div key={review.id} style={styles.reviewCard}>
                                 <div style={styles.reviewHeader}>
-                  <span
-                      style={{
-                          ...styles.sentimentBadge,
-                          backgroundColor: getSentimentColor(review.sentiment)
-                      }}
-                  >
-                    {getSentimentText(review.sentiment)}
-                  </span>
+                                    <span
+                                        style={{
+                                            ...styles.sentimentBadge,
+                                            backgroundColor: getSentimentColor(review.sentiment)
+                                        }}
+                                    >
+                                        {getSentimentText(review.sentiment)}
+                                    </span>
                                     <span style={styles.reviewDate}>
-                    {new Date(review.reviewed_at).toLocaleDateString('ru-RU')}
-                  </span>
+                                        {new Date(review.reviewed_at).toLocaleDateString('ru-RU')}
+                                    </span>
                                 </div>
 
                                 <p style={styles.reviewText}>
@@ -424,6 +433,21 @@ function InstitutionDetail() {
                                         'Импорт из Отзовика'
                                     )}
                                 </button>
+
+                                <button
+                                    onClick={() => handleImport('OK')}
+                                    disabled={importLoading.gis || importLoading.yandex}
+                                    style={styles.importButton}
+                                >
+                                    {importLoading.ok ? (
+                                        <div style={styles.loadingContent}>
+                                            <div style={styles.spinner}></div>
+                                            Импорт из Одноклассников...
+                                        </div>
+                                    ) : (
+                                        'Импорт из Одноклассников'
+                                    )}
+                                </button>
                             </div>
 
                             {importResult && (
@@ -434,9 +458,9 @@ function InstitutionDetail() {
                                                 ✅ Успешно импортировано {importResult.importedCount} новых отзывов из {importResult.source}
                                             </div>
                                             <div style={styles.resultActions}>
-          <span style={styles.resultText}>
-            Всего отзывов: {importResult.totalCount}
-          </span>
+                                                <span style={styles.resultText}>
+                                                    Всего отзывов: {importResult.totalCount}
+                                                </span>
                                                 <button
                                                     onClick={handleViewReviews}
                                                     style={styles.viewButton}

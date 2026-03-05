@@ -244,6 +244,12 @@ export const importAPI = {
             institution_id: institutionId
         });
         return response.data;
+    },
+    importOKReviews: async (institutionId) => {
+        const response = await api.post('/import-ok-reviews/', {
+            institution_id: institutionId
+        });
+        return response.data;
     }
 };
 
