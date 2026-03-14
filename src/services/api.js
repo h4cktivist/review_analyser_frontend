@@ -211,6 +211,14 @@ export const reviewsAPI = {
     searchByText: async (text) => {
         const response = await api.get(`reviews/search/?q=${text}`);
         return response.data.results;
+    },
+
+    confirmAction: async (id, actionWord, accepted) => {
+        const response = await api.post(`/reviews/${id}/actions/confirm/`, {
+            action_word: actionWord,
+            accepted: accepted
+        });
+        return response.data;
     }
 };
 

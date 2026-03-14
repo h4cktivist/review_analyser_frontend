@@ -59,6 +59,7 @@ export default function ReviewsDashboard() {
         event: null,          // string | null
         aspectCountMin: null, // number | null
         aspectCountMax: null, // number | null
+        hasSuggestedActions: null, // boolean | null
     });
 
     useEffect(() => {
@@ -86,6 +87,9 @@ export default function ReviewsDashboard() {
             if (filters.aspectCountMin !== null && totalAspects < filters.aspectCountMin) return false;
             if (filters.aspectCountMax !== null && totalAspects > filters.aspectCountMax) return false;
 
+            if (filters.hasSuggestedActions === true && (!r.required_actions || r.required_actions.length === 0)) return false;
+            if (filters.hasSuggestedActions === false && r.required_actions && r.required_actions.length > 0) return false;
+
             return true;
         });
     }, [reviews, filters]);
@@ -106,7 +110,10 @@ export default function ReviewsDashboard() {
             return iso.slice(0, 10);
         };
 
+        let totalActionsCount = 0;
+
         filteredReviews.forEach(r => {
+            if (r.required_actions) totalActionsCount += r.required_actions.length;
             sentimentCount[r.sentiment]++;
             r.positive_aspects.forEach(a => positiveAspectCount[a] = (positiveAspectCount[a] || 0) + 1);
             r.negative_aspects.forEach(a => negativeAspectCount[a] = (negativeAspectCount[a] || 0) + 1);
@@ -137,6 +144,7 @@ export default function ReviewsDashboard() {
             eventData: Object.entries(eventCount)
                 .map(([name, value]) => ({ name, value }))
                 .sort((a, b) => b.value - a.value),
+            totalActionsCount
         };
     }, [filteredReviews, timeMode]);
 
@@ -329,6 +337,22 @@ export default function ReviewsDashboard() {
                     />
                 </div>
 
+                <div style={{ display: "flex", flexDirection: "column", minWidth: "150px" }}>
+                    <label style={{ marginBottom: "0.25rem", fontWeight: 600, color: "#2c3e50" }}>Предложения</label>
+                    <select
+                        value={filters.hasSuggestedActions === null ? "" : filters.hasSuggestedActions.toString()}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setFilters(f => ({ ...f, hasSuggestedActions: val === "" ? null : val === "true" }));
+                        }}
+                        style={filterStyle}
+                    >
+                        <option value="">Все</option>
+                        <option value="true">Есть предложения</option>
+                        <option value="false">Нет предложений</option>
+                    </select>
+                </div>
+
                 <button
                     onClick={() =>
                         setFilters({
@@ -341,6 +365,7 @@ export default function ReviewsDashboard() {
                             event: null,
                             aspectCountMin: null,
                             aspectCountMax: null,
+                            hasSuggestedActions: null,
                         })
                     }
                     style={{

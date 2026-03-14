@@ -17,6 +17,8 @@ function ReviewList() {
         dateTo: '',
         aspectCountMin: '',
         aspectCountMax: '',
+        hasSuggestedActions: '',
+        source: '',
     });
     const [institutions, setInstitutions] = useState([]);
     const [events, setEvents] = useState([]);
@@ -135,6 +137,16 @@ function ReviewList() {
             }
 
             if (filters.aspectCountMax !== '' && totalAspects > parseInt(filters.aspectCountMax)) {
+                return false;
+            }
+
+            if (filters.hasSuggestedActions === 'true') {
+                if (!review.required_actions || review.required_actions.length === 0) return false;
+            } else if (filters.hasSuggestedActions === 'false') {
+                if (review.required_actions && review.required_actions.length > 0) return false;
+            }
+
+            if (filters.source && review.source !== filters.source) {
                 return false;
             }
 
@@ -262,6 +274,25 @@ function ReviewList() {
                 </div>
 
                 <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Источник:</label>
+                    <select
+                        value={filters.source}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, source: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    >
+                        <option value="">Все</option>
+                        {Array.from(new Set(allReviews.map((r) => r.source))).map((src) => (
+                            <option key={src} value={src}>
+                                {src}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div style={styles.filterGroup}>
                     <label style={styles.filterLabel}>Мероприятие:</label>
                     <select
                         value={filters.event}
@@ -340,7 +371,23 @@ function ReviewList() {
                     />
                 </div>
 
-                {(filters.sentiment || filters.institution || filters.event || filters.dateFrom || filters.aspectCountMin !== '' || filters.aspectCountMax !== '') && (
+                <div style={styles.filterGroup}>
+                    <label style={styles.filterLabel}>Предложения:</label>
+                    <select
+                        value={filters.hasSuggestedActions}
+                        onChange={(e) => {
+                            setFilters(prev => ({ ...prev, hasSuggestedActions: e.target.value }));
+                            setCurrentPage(1);
+                        }}
+                        style={styles.select}
+                    >
+                        <option value="">Все</option>
+                        <option value="true">Есть предложения</option>
+                        <option value="false">Нет предложений</option>
+                    </select>
+                </div>
+
+                {(filters.sentiment || filters.institution || filters.event || filters.dateFrom || filters.hasSuggestedActions || filters.aspectCountMin !== '' || filters.aspectCountMax !== '' || filters.source) && (
                     <button
                         onClick={() => {
                             setFilters({
@@ -351,6 +398,8 @@ function ReviewList() {
                                 dateTo: '',
                                 aspectCountMin: '',
                                 aspectCountMax: '',
+                                hasSuggestedActions: '',
+                                source: '',
                             });
                             setCurrentPage(1);
                         }}
@@ -363,7 +412,7 @@ function ReviewList() {
 
             <div style={styles.filterInfo}>
                 Найдено отзывов: {filteredReviews.length}
-                {(filters.sentiment || filters.institution || filters.event || filters.dateFrom || filters.aspectCountMin !== '' || filters.aspectCountMax !== '') && (
+                {(filters.sentiment || filters.institution || filters.event || filters.dateFrom || filters.hasSuggestedActions || filters.aspectCountMin !== '' || filters.aspectCountMax !== '' || filters.source) && (
                     <span style={styles.activeFilters}>
                         (отфильтровано)
                     </span>
@@ -484,7 +533,7 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, getSentimentText
                 Подробнее
             </Link>
 
-            {review.positive_aspects || review.negative_aspects ? (
+            {review.positive_aspects || review.negative_aspects || review.potential_actions || review.required_actions ? (
                 <div style={styles.aspects}>
                     <div style={styles.aspectsList}>
                         {review.positive_aspects?.map((aspect, index) => (
@@ -495,6 +544,16 @@ const ReviewCard = ({ review, maxTextLength, getSentimentColor, getSentimentText
                         {review.negative_aspects?.map((aspect, index) => (
                             <span key={`negative-${index}`} style={styles.negativeTag}>
                                 {aspect.trim()}
+                            </span>
+                        ))}
+                        {review.required_actions?.map((action, index) => (
+                            <span key={`required-${index}`} style={styles.actionTag}>
+                                🎯 {action.trim()}
+                            </span>
+                        ))}
+                        {review.potential_actions?.map((action, index) => (
+                            <span key={`potential-${index}`} style={styles.potentialTag}>
+                                ❓ {action.trim()}
                             </span>
                         ))}
                     </div>
@@ -617,6 +676,24 @@ const styles = {
         color: '#991b1b',
         border: '1px solid #fecaca'
     },
+    actionTag: {
+        padding: '4px 8px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: '500',
+        backgroundColor: '#e0e7ff',
+        color: '#3730a3',
+        border: '1px solid #c7d2fe'
+    },
+    potentialTag: {
+        padding: '4px 8px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: '500',
+        backgroundColor: '#fef3c7',
+        color: '#92400e',
+        border: '1px solid #fde68a'
+    },
     footer: {
         display: 'flex',
         justifyContent: 'space-between',
@@ -710,11 +787,11 @@ const styles = {
     },
     filters: {
         display: 'flex',
-        gap: '2rem',
+        gap: '1.5rem',
         alignItems: 'flex-end',
-        marginTop: '3rem',
+        marginTop: '1.5rem',
         marginBottom: '1rem',
-        padding: '1.5rem',
+        padding: '1.25rem',
         backgroundColor: 'white',
         borderRadius: '12px',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
@@ -723,8 +800,8 @@ const styles = {
     filterGroup: {
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.5rem',
-        minWidth: '200px',
+        gap: '0.25rem',
+        minWidth: '150px',
     },
     filterLabel: {
         fontWeight: '600',
@@ -732,14 +809,15 @@ const styles = {
         fontSize: '0.9rem',
     },
     select: {
-        padding: '0.75rem',
+        padding: '0.5rem 0.75rem',
         border: '1px solid #ddd',
         borderRadius: '6px',
-        fontSize: '1rem',
+        fontSize: '0.9rem',
         backgroundColor: 'white',
+        cursor: 'pointer',
     },
     clearButton: {
-        padding: '0.75rem 1.5rem',
+        padding: '0.5rem 1rem',
         border: '1px solid #e74c3c',
         backgroundColor: 'white',
         color: '#e74c3c',
@@ -747,7 +825,36 @@ const styles = {
         cursor: 'pointer',
         fontSize: '0.9rem',
         fontWeight: '600',
-        alignSelf: 'flex-end',
+        marginLeft: 'auto',
+    },
+    searchContainer: {
+        display: 'flex',
+        gap: '1rem',
+        alignItems: 'flex-end',
+        marginTop: '1.5rem',
+        marginBottom: '1rem',
+        padding: '1.25rem',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        flexWrap: 'wrap',
+    },
+    searchInput: {
+        flex: 1,
+        padding: '0.5rem 0.75rem',
+        border: '1px solid #ddd',
+        borderRadius: '6px',
+        fontSize: '0.9rem'
+    },
+    searchButton: {
+        padding: '0.5rem 1rem',
+        backgroundColor: '#007bff',
+        color: 'white',
+        border: 'none',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        fontSize: '0.9rem',
+        fontWeight: '600'
     },
     filterInfo: {
         marginBottom: '1rem',
@@ -761,34 +868,6 @@ const styles = {
         color: '#3498db',
         fontWeight: '600',
         marginLeft: '0.5rem',
-    },
-    searchContainer: {
-        display: 'flex',
-        gap: '2rem',
-        alignItems: 'flex-end',
-        marginTop: '3rem',
-        marginBottom: '1rem',
-        padding: '1.5rem',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        flexWrap: 'wrap',
-    },
-    searchInput: {
-        flex: 1,
-        padding: '8px 12px',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-        fontSize: '14px'
-    },
-    searchButton: {
-        padding: '8px 16px',
-        backgroundColor: '#007bff',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontSize: '14px'
     },
 };
 
