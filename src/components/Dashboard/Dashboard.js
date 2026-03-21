@@ -3,7 +3,7 @@ import {
     PieChart, Pie, Cell, Tooltip,
     BarChart, Bar, XAxis, YAxis,
     ResponsiveContainer,
-    LineChart, Line
+    LineChart, Line, Legend, Brush
 } from "recharts";
 import { TrendingUp, MessageSquare, Smile, Frown, MehIcon } from "lucide-react";
 import { reviewsAPI } from "../../services/api";
@@ -114,12 +114,20 @@ export default function ReviewsDashboard() {
 
         filteredReviews.forEach(r => {
             if (r.required_actions) totalActionsCount += r.required_actions.length;
-            sentimentCount[r.sentiment]++;
+            if (sentimentCount[r.sentiment] !== undefined) {
+                sentimentCount[r.sentiment] += 1;
+            }
             r.positive_aspects.forEach(a => positiveAspectCount[a] = (positiveAspectCount[a] || 0) + 1);
             r.negative_aspects.forEach(a => negativeAspectCount[a] = (negativeAspectCount[a] || 0) + 1);
 
             const key = groupKey(r.reviewed_at);
-            byDate[key] = (byDate[key] || 0) + 1;
+            if (!byDate[key]) {
+                byDate[key] = { total: 0, positive: 0, negative: 0, neutral: 0 };
+            }
+            byDate[key].total += 1;
+            if (byDate[key][r.sentiment] !== undefined) {
+                byDate[key][r.sentiment] += 1;
+            }
 
             sourceCount[r.source] = (sourceCount[r.source] || 0) + 1;
             institutionCount[r.institution_name] = (institutionCount[r.institution_name] || 0) + 1;
@@ -136,7 +144,9 @@ export default function ReviewsDashboard() {
             ],
             positiveAspects: Object.entries(positiveAspectCount).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 6),
             negativeAspects: Object.entries(negativeAspectCount).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 6),
-            timeline: Object.entries(byDate).sort((a, b) => a[0].localeCompare(b[0])).map(([date, value]) => ({ date, value })),
+            timeline: Object.entries(byDate)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([date, values]) => ({ date, ...values })),
             sourceData: Object.entries(sourceCount).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
             institutionData: Object.entries(institutionCount)
                 .map(([name, value]) => ({ name, value }))
@@ -194,6 +204,53 @@ export default function ReviewsDashboard() {
         "day": "День"
     };
 
+    const timelineTooltipContent = ({ active, payload, label }) => {
+        if (!active || !payload || payload.length === 0) return null;
+
+        const point = payload[0]?.payload;
+        if (!point) return null;
+
+        const rows = payload.map((item) => ({
+            name: item.name || item.dataKey,
+            value: item.value ?? 0,
+            color: item.color || item.stroke || "#64748b"
+        }));
+
+        rows.push({
+            name: "\u0412\u0441\u0435\u0433\u043e",
+            value: point.total ?? 0,
+            color: "#2563eb"
+        });
+
+        return (
+            <div style={{
+                background: "#fff",
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                padding: "0.5rem 0.75rem",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.12)"
+            }}>
+                <div style={{ fontWeight: 600, marginBottom: "0.35rem" }}>{label}</div>
+                {rows.map((row) => (
+                    <div
+                        key={row.name}
+                        style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem" }}
+                    >
+                        <span
+                            style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "999px",
+                                backgroundColor: row.color,
+                                display: "inline-block"
+                            }}
+                        />
+                        <span>{row.name}: {row.value}</span>
+                    </div>
+                ))}
+            </div>
+        );
+    };
     return (
         <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
 
@@ -485,19 +542,47 @@ export default function ReviewsDashboard() {
                         ))}
                     </div>
                 </div>
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={stats.timeline}>
                         <XAxis dataKey="date" />
                         <YAxis />
-                        <Tooltip />
+                        <Tooltip content={timelineTooltipContent} />
+                        <Legend />
                         <Line
                             type="monotone"
-                            dataKey="value"
-                            stroke="#2563eb"
+                            dataKey="positive"
+                            name="Позитивные"
+                            stroke={sentimentColors.positive}
                             dot={{
                                 onClick: (d) => setSelectedDrilldown({ type: "timeline", value: d.payload.date }),
                                 style: { cursor: "pointer" }
                             }}
+                        />
+                        <Line
+                            type="monotone"
+                            dataKey="neutral"
+                            name="Нейтральные"
+                            stroke={sentimentColors.neutral}
+                            dot={{
+                                onClick: (d) => setSelectedDrilldown({ type: "timeline", value: d.payload.date }),
+                                style: { cursor: "pointer" }
+                            }}
+                        />
+                        <Line
+                            type="monotone"
+                            dataKey="negative"
+                            name="Негативные"
+                            stroke={sentimentColors.negative}
+                            dot={{
+                                onClick: (d) => setSelectedDrilldown({ type: "timeline", value: d.payload.date }),
+                                style: { cursor: "pointer" }
+                            }}
+                        />
+                        <Brush
+                            dataKey="date"
+                            height={24}
+                            stroke="#94a3b8"
+                            travellerWidth={10}
                         />
                     </LineChart>
                 </ResponsiveContainer>
@@ -611,3 +696,5 @@ function HorizontalBar({ title, data, color, onSelect, type, scroll }) {
         </div>
     );
 }
+
+
