@@ -35,6 +35,15 @@ const sentimentColors = {
     neutral: "#f59e0b",
 };
 
+/** Видимая высота области скролла горизонтальных bar-графиков по ширине окна */
+function barChartViewportHeight(width) {
+    if (width < 640) return 260;
+    if (width < 900) return 320;
+    if (width < 1200) return 400;
+    if (width < 1536) return 480;
+    return 560;
+}
+
 const filterStyle = {
     padding: "0.5rem 0.75rem",
     borderRadius: "6px",
@@ -103,6 +112,13 @@ export default function ReviewsDashboard() {
         const institutionCount = {};
         const eventCount = {};
 
+        const bumpSentiment = (bucket, key) => {
+            if (!bucket[key]) {
+                bucket[key] = { positive: 0, negative: 0, neutral: 0 };
+            }
+            return bucket[key];
+        };
+
         const groupKey = (iso) => {
             const d = new Date(iso);
             if (timeMode === "year") return String(d.getFullYear());
@@ -129,10 +145,15 @@ export default function ReviewsDashboard() {
                 byDate[key][r.sentiment] += 1;
             }
 
-            sourceCount[r.source] = (sourceCount[r.source] || 0) + 1;
-            institutionCount[r.institution_name] = (institutionCount[r.institution_name] || 0) + 1;
+            const src = bumpSentiment(sourceCount, r.source);
+            if (src[r.sentiment] !== undefined) src[r.sentiment] += 1;
+
+            const inst = bumpSentiment(institutionCount, r.institution_name);
+            if (inst[r.sentiment] !== undefined) inst[r.sentiment] += 1;
+
             if (r.event_name) {
-                eventCount[r.event_name] = (eventCount[r.event_name] || 0) + 1;
+                const ev = bumpSentiment(eventCount, r.event_name);
+                if (ev[r.sentiment] !== undefined) ev[r.sentiment] += 1;
             }
         });
 
@@ -147,12 +168,32 @@ export default function ReviewsDashboard() {
             timeline: Object.entries(byDate)
                 .sort((a, b) => a[0].localeCompare(b[0]))
                 .map(([date, values]) => ({ date, ...values })),
-            sourceData: Object.entries(sourceCount).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
+            sourceData: Object.entries(sourceCount)
+                .map(([name, counts]) => ({
+                    name,
+                    positive: counts.positive,
+                    negative: counts.negative,
+                    neutral: counts.neutral,
+                    value: counts.positive + counts.negative + counts.neutral,
+                }))
+                .sort((a, b) => b.value - a.value),
             institutionData: Object.entries(institutionCount)
-                .map(([name, value]) => ({ name, value }))
+                .map(([name, counts]) => ({
+                    name,
+                    positive: counts.positive,
+                    negative: counts.negative,
+                    neutral: counts.neutral,
+                    value: counts.positive + counts.negative + counts.neutral,
+                }))
                 .sort((a, b) => b.value - a.value),
             eventData: Object.entries(eventCount)
-                .map(([name, value]) => ({ name, value }))
+                .map(([name, counts]) => ({
+                    name,
+                    positive: counts.positive,
+                    negative: counts.negative,
+                    neutral: counts.neutral,
+                    value: counts.positive + counts.negative + counts.neutral,
+                }))
                 .sort((a, b) => b.value - a.value),
             totalActionsCount
         };
@@ -161,7 +202,7 @@ export default function ReviewsDashboard() {
     const drilldownReviews = useMemo(() => {
         if (!selectedDrilldown) return [];
 
-        const { type, value, polarity } = selectedDrilldown;
+        const { type, value, polarity, sentiment: segmentSentiment } = selectedDrilldown;
 
         return filteredReviews.filter(r => {
             switch (type) {
@@ -173,9 +214,6 @@ export default function ReviewsDashboard() {
                 case "sentiment":
                     return r.sentiment === value;
 
-                case "source":
-                    return r.source === value;
-
                 case "timeline":
                     const d = new Date(r.reviewed_at);
                     if (timeMode === "year") return String(d.getFullYear()) === value;
@@ -183,10 +221,16 @@ export default function ReviewsDashboard() {
                     return r.reviewed_at.slice(0, 10) === value;
 
                 case "institution":
-                    return r.institution_name === value;
+                    if (r.institution_name !== value) return false;
+                    return !segmentSentiment || r.sentiment === segmentSentiment;
 
                 case "event":
-                    return r.event_name === value;
+                    if (r.event_name !== value) return false;
+                    return !segmentSentiment || r.sentiment === segmentSentiment;
+
+                case "source":
+                    if (r.source !== value) return false;
+                    return !segmentSentiment || r.sentiment === segmentSentiment;
 
                 default:
                     return false;
@@ -592,16 +636,14 @@ export default function ReviewsDashboard() {
                 <HorizontalBar
                     title="Отзывы по учреждениям"
                     data={stats.institutionData}
-                    color="#2563eb"
-                    type={"institution"}
+                    type="institution"
                     onSelect={setSelectedDrilldown}
                 />
 
                 <HorizontalBar
                     title="Отзывы по мероприятиям"
                     data={stats.eventData}
-                    color="#10b981"
-                    type={"event"}
+                    type="event"
                     onSelect={setSelectedDrilldown}
                     scroll={true}
                 />
@@ -610,8 +652,7 @@ export default function ReviewsDashboard() {
             <HorizontalBar
                 title="Количество отзывов по источникам"
                 data={stats.sourceData}
-                color="#E9D66B"
-                type={"source"}
+                type="source"
                 onSelect={setSelectedDrilldown}
             />
 
@@ -619,6 +660,14 @@ export default function ReviewsDashboard() {
                 <div style={{ ...cardStyle, marginTop: "2rem" }}>
                     <h3 style={cardTitle}>
                         <span style={{ color: "#2563eb" }}>{selectedDrilldown.value}</span>
+                        {selectedDrilldown.sentiment && (
+                            <span style={{ color: "#64748b", fontWeight: 500 }}>
+                                {" · "}
+                                {selectedDrilldown.sentiment === "positive" && "позитивные"}
+                                {selectedDrilldown.sentiment === "negative" && "негативные"}
+                                {selectedDrilldown.sentiment === "neutral" && "нейтральные"}
+                            </span>
+                        )}
                     </h3>
                     <div style={{ maxHeight: "320px", overflowY: "auto", paddingRight: "0.5rem", marginTop: "1rem" }}>
                         {drilldownReviews.map(r => (
@@ -664,7 +713,27 @@ function AspectBar({ title, data, color, polarity, onSelect }) {
     );
 }
 
-function HorizontalBar({ title, data, color, onSelect, type, scroll }) {
+function HorizontalBar({ title, data, onSelect, type, scroll }) {
+    const [viewportHeight, setViewportHeight] = useState(() =>
+        typeof window !== "undefined" ? barChartViewportHeight(window.innerWidth) : 400
+    );
+
+    useEffect(() => {
+        const onResize = () => setViewportHeight(barChartViewportHeight(window.innerWidth));
+        onResize();
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
+
+    const handleSegmentClick = (sentiment) => (barData) => {
+        const row = barData?.payload ?? barData;
+        if (!row?.name) return;
+        const count = row[sentiment];
+        if (count === 0 || count === undefined) return;
+        onSelect({ type, value: row.name, sentiment });
+    };
+    const chartHeight = Math.max(300, data.length * 34);
+
     return (
         <div style={{
             ...cardStyle,
@@ -674,24 +743,50 @@ function HorizontalBar({ title, data, color, onSelect, type, scroll }) {
             paddingBottom: scroll ? "1rem" : undefined
         }}>
             <h3 style={cardTitle}>{title}</h3>
-            <div style={{ minWidth: scroll ? "700px" : "100%", width: "100%", height: 300 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                        layout="vertical"
-                        data={data}
-                        margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
-                    >
-                        <XAxis type="number" />
-                        <YAxis type="category" dataKey="name" width={scroll ? 200 : 120} />
-                        <Tooltip />
-                        <Bar
-                            dataKey="value"
-                            fill={color}
-                            onClick={d => onSelect({ type: type, value: d.name })}
-                            cursor="pointer"
-                        />
-                    </BarChart>
-                </ResponsiveContainer>
+            <div style={{ maxHeight: viewportHeight, overflowY: "auto" }}>
+                <div style={{ minWidth: scroll ? "700px" : "100%", width: "100%", height: chartHeight }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            layout="vertical"
+                            data={data}
+                            margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
+                        >
+                            <XAxis type="number" />
+                            <YAxis
+                                type="category"
+                                dataKey="name"
+                                width={scroll ? 240 : 180}
+                                interval={0}
+                            />
+                            <Tooltip />
+                            <Legend />
+                            <Bar
+                                stackId="sentiment"
+                                dataKey="negative"
+                                name="Негативные"
+                                fill={sentimentColors.negative}
+                                onClick={handleSegmentClick("negative")}
+                                cursor="pointer"
+                            />
+                            <Bar
+                                stackId="sentiment"
+                                dataKey="neutral"
+                                name="Нейтральные"
+                                fill={sentimentColors.neutral}
+                                onClick={handleSegmentClick("neutral")}
+                                cursor="pointer"
+                            />
+                            <Bar
+                                stackId="sentiment"
+                                dataKey="positive"
+                                name="Позитивные"
+                                fill={sentimentColors.positive}
+                                onClick={handleSegmentClick("positive")}
+                                cursor="pointer"
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );
