@@ -732,6 +732,54 @@ function HorizontalBar({ title, data, onSelect, type, scroll }) {
         if (count === 0 || count === undefined) return;
         onSelect({ type, value: row.name, sentiment });
     };
+
+    const horizontalTooltipContent = ({ active, payload, label }) => {
+        if (!active || !payload || payload.length === 0) return null;
+
+        const row = payload[0]?.payload;
+        if (!row) return null;
+
+        const rows = payload.map((item) => ({
+            name: item.name || item.dataKey,
+            value: item.value ?? 0,
+            color: item.color || "#64748b"
+        }));
+
+        rows.push({
+            name: "\u0412\u0441\u0435\u0433\u043e",
+            value: row.value ?? 0,
+            color: "#2563eb"
+        });
+
+        return (
+            <div style={{
+                background: "#fff",
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                padding: "0.5rem 0.75rem",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.12)"
+            }}>
+                <div style={{ fontWeight: 600, marginBottom: "0.35rem" }}>{label}</div>
+                {rows.map((item) => (
+                    <div
+                        key={item.name}
+                        style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem" }}
+                    >
+                        <span
+                            style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "999px",
+                                backgroundColor: item.color,
+                                display: "inline-block"
+                            }}
+                        />
+                        <span>{item.name}: {item.value}</span>
+                    </div>
+                ))}
+            </div>
+        );
+    };
     const chartHeight = Math.max(300, data.length * 34);
 
     return (
@@ -758,7 +806,7 @@ function HorizontalBar({ title, data, onSelect, type, scroll }) {
                                 width={scroll ? 240 : 180}
                                 interval={0}
                             />
-                            <Tooltip />
+                            <Tooltip content={horizontalTooltipContent} />
                             <Legend />
                             <Bar
                                 stackId="sentiment"
