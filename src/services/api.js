@@ -137,10 +137,10 @@ export const authAPI = {
         return response.data;
     },
 
-    getProfile: async () => {
-        const response = await api.get('/auth/profile/')
+    getMe: async () => {
+        const response = await api.get('/auth/me/');
         return response.data;
-    }
+    },
 };
 
 export const institutionsAPI = {

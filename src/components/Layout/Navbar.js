@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { clearTokens } from '../../services/api';
 
 function Navbar() {
     const navigate = useNavigate();
     const isAuthenticated = localStorage.getItem('access_token');
 
     const handleLogout = () => {
-        localStorage.removeItem('access_token');
+        clearTokens();
         localStorage.removeItem('is_admin');
         navigate('/login');
     };
@@ -26,9 +27,12 @@ function Navbar() {
 
             <div style={styles.authLinks}>
                 {isAuthenticated ? (
-                    <button onClick={handleLogout} style={styles.logoutBtn}>
-                        Выйти
-                    </button>
+                    <>
+                        <Link to="/profile" style={styles.link}>Профиль</Link>
+                        <button onClick={handleLogout} style={styles.logoutBtn}>
+                            Выйти
+                        </button>
+                    </>
                 ) : (
                     <>
                         <Link to="/login" style={styles.link}>Войти</Link>

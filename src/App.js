@@ -11,6 +11,7 @@ import ReviewDetail from "./components/Reviews/ReviewDetail";
 import InstitutionDetail from "./components/Institutions/InstitutionDetail";
 import EventDetail from "./components/Events/EventDetail";
 import Dashboard from "./components/Dashboard/Dashboard";
+import Profile from "./components/Auth/Profile";
 
 // Компонент для защиты маршрутов
 const ProtectedRoute = ({ children }) => {
@@ -83,6 +84,14 @@ function App() {
                   element={
                       <ProtectedRoute>
                           <Dashboard />
+                      </ProtectedRoute>
+                  }
+              />
+              <Route
+                  path="/profile"
+                  element={
+                      <ProtectedRoute>
+                          <Profile />
                       </ProtectedRoute>
                   }
               />
