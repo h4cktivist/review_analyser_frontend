@@ -5,7 +5,7 @@ import {
     ResponsiveContainer,
     LineChart, Line, Legend, Brush
 } from "recharts";
-import { TrendingUp, MessageSquare, Smile, Frown, MehIcon } from "lucide-react";
+import { TrendingUp, MessageSquare, Smile, Frown, MehIcon, ListChecks } from "lucide-react";
 import { reviewsAPI } from "../../services/api";
 import { Link } from "react-router-dom";
 
@@ -51,7 +51,29 @@ const filterStyle = {
     fontSize: "0.9rem",
     backgroundColor: "white",
     cursor: "pointer",
+};
+
+/** Текст пункта required_actions (строка или объект с полем text/title). */
+function requiredActionLabel(action) {
+    if (action == null) return "";
+    if (typeof action === "string") return action.trim();
+    if (typeof action === "object") {
+        const t = action.text ?? action.title ?? action.action;
+        return typeof t === "string" ? t.trim() : "";
+    }
+    return String(action).trim();
 }
+
+const requiredActionChipStyle = {
+    display: "inline-block",
+    padding: "4px 8px",
+    borderRadius: "12px",
+    fontSize: "12px",
+    fontWeight: 500,
+    backgroundColor: "#e0e7ff",
+    color: "#3730a3",
+    border: "1px solid #c7d2fe",
+};
 
 export default function ReviewsDashboard() {
     const [reviews, setReviews] = useState([]);
@@ -111,6 +133,7 @@ export default function ReviewsDashboard() {
         const sourceCount = {};
         const institutionCount = {};
         const eventCount = {};
+        const requiredActionCount = {};
 
         const bumpSentiment = (bucket, key) => {
             if (!bucket[key]) {
@@ -155,7 +178,21 @@ export default function ReviewsDashboard() {
                 const ev = bumpSentiment(eventCount, r.event_name);
                 if (ev[r.sentiment] !== undefined) ev[r.sentiment] += 1;
             }
+
+            if (Array.isArray(r.required_actions)) {
+                r.required_actions.forEach((action) => {
+                    const label = requiredActionLabel(action);
+                    if (!label) return;
+                    requiredActionCount[label] = (requiredActionCount[label] || 0) + 1;
+                });
+            }
         });
+
+        const requiredActionsSorted = Object.entries(requiredActionCount)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+
+        const requiredActionsData = requiredActionsSorted.slice(0, 15);
 
         return {
             sentimentData: Object.entries(sentimentCount).map(([name, value]) => ({ name, value })),
@@ -195,7 +232,8 @@ export default function ReviewsDashboard() {
                     value: counts.positive + counts.negative + counts.neutral,
                 }))
                 .sort((a, b) => b.value - a.value),
-            totalActionsCount
+            totalActionsCount,
+            requiredActionsData
         };
     }, [filteredReviews, timeMode]);
 
@@ -231,6 +269,10 @@ export default function ReviewsDashboard() {
                 case "source":
                     if (r.source !== value) return false;
                     return !segmentSentiment || r.sentiment === segmentSentiment;
+
+                case "requiredAction":
+                    if (!Array.isArray(r.required_actions)) return false;
+                    return r.required_actions.some((a) => requiredActionLabel(a) === value);
 
                 default:
                     return false;
@@ -493,11 +535,12 @@ export default function ReviewsDashboard() {
                 </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
                 <KPI title="Всего отзывов" value={filteredReviews.length} icon={<MessageSquare />} />
                 <KPI title="Позитивные" value={stats.sentimentData.find(s => s.name === "positive")?.value || 0} icon={<Smile />} />
                 <KPI title="Негативные" value={stats.sentimentData.find(s => s.name === "negative")?.value || 0} icon={<Frown />} />
                 <KPI title="Нейтральные" value={stats.sentimentData.find(s => s.name === "neutral")?.value || 0} icon={<MehIcon />} />
+                <KPI title="Предложенных действий" value={stats.totalActionsCount} icon={<ListChecks />} />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem", marginBottom: "2rem" }}>
@@ -557,6 +600,16 @@ export default function ReviewsDashboard() {
                     polarity="negative"
                     onSelect={(d) =>
                         setSelectedDrilldown({ type: "aspect", value: d.name, polarity: "negative" })
+                    }
+                />
+            </div>
+
+            <div style={{ marginBottom: "2rem" }}>
+                <RequiredActionsBar
+                    title="Частота предлагаемых действий"
+                    data={stats.requiredActionsData}
+                    onSelectAction={(name) =>
+                        setSelectedDrilldown({ type: "requiredAction", value: name })
                     }
                 />
             </div>
@@ -673,6 +726,24 @@ export default function ReviewsDashboard() {
                         {drilldownReviews.map(r => (
                             <div key={r.id} style={{ padding: "0.75rem 0", borderBottom: "1px solid #eee" }}>
                                 <div style={{ lineHeight: 1.5 }}>{r.text}</div>
+                                {Array.isArray(r.required_actions) && r.required_actions.length > 0 && (
+                                    <div style={{ marginTop: "0.6rem" }}>
+                                        <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "#4338ca", marginBottom: "0.35rem", letterSpacing: "0.02em" }}>
+                                            Предлагаемые действия
+                                        </div>
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                                            {r.required_actions.map((action, index) => {
+                                                const text = requiredActionLabel(action);
+                                                if (!text) return null;
+                                                return (
+                                                    <span key={`${r.id}-action-${index}`} style={requiredActionChipStyle}>
+                                                        🎯 {text}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                                 <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "0.25rem" }}>
                                     {r.institution_name} · {r.source} · <Link to={`/reviews/${r.id}`} style={{ color: "#2563eb" }}>подробнее</Link>
                                 </div>
@@ -693,6 +764,78 @@ function KPI({ title, value, icon }) {
                 <div style={kpiValue}>{value}</div>
             </div>
             <div style={{ opacity: 0.7 }}>{icon}</div>
+        </div>
+    );
+}
+
+const requiredActionsBarColor = "#6366f1";
+
+function RequiredActionsBar({ title, data, onSelectAction }) {
+    const [viewportHeight, setViewportHeight] = useState(() =>
+        typeof window !== "undefined" ? barChartViewportHeight(window.innerWidth) : 400
+    );
+
+    useEffect(() => {
+        const onResize = () => setViewportHeight(barChartViewportHeight(window.innerWidth));
+        onResize();
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
+
+    if (!data?.length) {
+        return (
+            <div style={cardStyle}>
+                <h3 style={cardTitle}>{title}</h3>
+                <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: 0 }}>
+                    Нет предлагаемых действий в текущей выборке фильтров.
+                </p>
+            </div>
+        );
+    }
+
+    const chartHeight = Math.max(260, data.length * 36);
+
+    const handleBarClick = (barProps) => {
+        const row = barProps?.payload ?? barProps;
+        const name = row?.name ?? barProps?.name;
+        if (name) onSelectAction(name);
+    };
+
+    return (
+        <div style={cardStyle}>
+            <h3 style={cardTitle}>{title}</h3>
+            <div style={{ maxHeight: viewportHeight, overflowY: "auto" }}>
+                <div style={{ width: "100%", height: chartHeight }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            layout="vertical"
+                            data={data}
+                            margin={{ top: 4, right: 28, left: 4, bottom: 4 }}
+                        >
+                            <XAxis type="number" allowDecimals={false} />
+                            <YAxis
+                                type="category"
+                                dataKey="name"
+                                width={200}
+                                interval={0}
+                                tick={{ fontSize: 11 }}
+                                tickFormatter={(v) =>
+                                    typeof v === "string" && v.length > 34 ? `${v.slice(0, 32)}…` : v
+                                }
+                            />
+                            <Tooltip formatter={(v) => [v, "Упоминаний"]} />
+                            <Bar
+                                dataKey="value"
+                                name="Упоминаний"
+                                fill={requiredActionsBarColor}
+                                radius={[0, 6, 6, 0]}
+                                cursor="pointer"
+                                onClick={handleBarClick}
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
         </div>
     );
 }
