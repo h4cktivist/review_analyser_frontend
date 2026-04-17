@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { importAPI, institutionsAPI, reviewsAPI } from '../../services/api';
+import { getVkAccessToken, importAPI, institutionsAPI, reviewsAPI } from '../../services/api';
 
 function InstitutionDetail() {
     const { id } = useParams();
@@ -20,6 +20,7 @@ function InstitutionDetail() {
         ok: false,
     });
     const [importResult, setImportResult] = useState(null);
+    const [vkAuthError, setVkAuthError] = useState('');
 
     useEffect(() => {
         const fetchInstitutionData = async () => {
@@ -86,7 +87,15 @@ function InstitutionDetail() {
             }
             else if (source === 'VK') {
                 setImportLoading(prev => ({ ...prev, vk: true }));
-                const response = await importAPI.importVKReviews(id);
+                const token = getVkAccessToken();
+
+                if (!token) {
+                    setVkAuthError('Сначала сохраните VK token на странице профиля.');
+                    return;
+                }
+
+                setVkAuthError('');
+                const response = await importAPI.importVKReviews(id, token);
                 setImportResult({
                     source: source,
                     importedCount: response.imported_reviews.length,
@@ -357,6 +366,7 @@ function InstitutionDetail() {
                             <p style={styles.importDescription}>
                                 Загрузите последние отзывы из внешних источников
                             </p>
+                            {vkAuthError && <div style={styles.vkAuthError}>{vkAuthError}</div>}
 
                             <div style={styles.importButtons}>
                                 <button
@@ -728,6 +738,15 @@ const styles = {
         display: 'flex',
         gap: '1rem',
         flexWrap: 'wrap',
+    },
+    vkAuthError: {
+        marginBottom: '1rem',
+        padding: '0.75rem',
+        borderRadius: '6px',
+        backgroundColor: '#fff3cd',
+        border: '1px solid #ffe69c',
+        color: '#c0392b',
+        fontSize: '0.9rem',
     },
     importButton: {
         padding: '1rem 1.5rem',

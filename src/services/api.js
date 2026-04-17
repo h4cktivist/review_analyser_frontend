@@ -39,6 +39,22 @@ export const clearTokens = () => {
     localStorage.removeItem('refresh_token');
 };
 
+const VK_ACCESS_TOKEN_KEY = 'vk_access_token';
+
+export const saveVkAccessToken = (token) => {
+    if (token) {
+        localStorage.setItem(VK_ACCESS_TOKEN_KEY, token);
+    }
+};
+
+export const getVkAccessToken = () => {
+    return localStorage.getItem(VK_ACCESS_TOKEN_KEY);
+};
+
+export const clearVkAccessToken = () => {
+    localStorage.removeItem(VK_ACCESS_TOKEN_KEY);
+};
+
 const refreshAccessToken = async () => {
     const { refresh } = getTokens();
 
@@ -241,9 +257,11 @@ export const importAPI = {
         });
         return response.data;
     },
-    importVKReviews: async (institutionId) => {
+    importVKReviews: async (institutionId, vkAccessToken) => {
+        const token = vkAccessToken || getVkAccessToken();
         const response = await api.post('/import-vk-reviews/', {
-            institution_id: institutionId
+            institution_id: institutionId,
+            vk_access_token: token
         });
         return response.data;
     },

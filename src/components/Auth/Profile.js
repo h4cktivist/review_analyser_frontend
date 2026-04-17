@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { authAPI } from '../../services/api';
+import { authAPI, clearVkAccessToken, getVkAccessToken, saveVkAccessToken } from '../../services/api';
+
+const VK_DIRECT_AUTH_URL = 'https://id.vk.com/auth?return_auth_hash=aaf4efcd98b6a3ce40&redirect_uri=https%3A%2F%2Foauth.vk.com%2Fblank.html&redirect_uri_hash=b6f46624f99cf5313f&force_hash=1&app_id=6287487&response_type=token&code_challenge=&code_challenge_method=&scope=408861919&state=';
 
 const FIELD_ORDER = [
     'email',
@@ -47,6 +49,9 @@ function Profile() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [vkToken, setVkToken] = useState(() => getVkAccessToken());
+    const [vkAuthError, setVkAuthError] = useState('');
+    const [vkRedirectResultUrl, setVkRedirectResultUrl] = useState('');
 
     useEffect(() => {
         let cancelled = false;
@@ -87,8 +92,39 @@ function Profile() {
           })()
         : [];
 
+    const handleVKAuth = () => {
+        window.open(VK_DIRECT_AUTH_URL, '_blank', 'noopener,noreferrer');
+    };
+
+    const handleApplyVkTokenFromUrl = () => {
+        try {
+            const parsedUrl = new URL(vkRedirectResultUrl.trim());
+            const hashParams = new URLSearchParams(parsedUrl.hash.replace(/^#/, ''));
+            const token = hashParams.get('access_token');
+
+            if (!token) {
+                setVkAuthError('В ссылке нет access_token. Вставьте полный URL после редиректа VK.');
+                return;
+            }
+
+            saveVkAccessToken(token);
+            setVkToken(token);
+            setVkAuthError('');
+            setVkRedirectResultUrl('');
+        } catch (e) {
+            setVkAuthError('Некорректный URL. Вставьте полный URL из адресной строки после авторизации VK.');
+        }
+    };
+
+    const handleClearVkToken = () => {
+        clearVkAccessToken();
+        setVkToken('');
+        setVkAuthError('');
+    };
+
     return (
         <div style={styles.container}>
+            <div style={styles.content}>
             <div style={styles.card}>
                 <h2 style={styles.title}>Профиль</h2>
 
@@ -110,6 +146,48 @@ function Profile() {
                     <Link to="/dashboard">На главную</Link>
                 </p>
             </div>
+            <div style={styles.card}>
+                <h2 style={styles.title}>Интеграция VK</h2>
+                <p style={styles.muted}>
+                    Получите access token через VK ID и сохраните его для импорта отзывов из VK.
+                </p>
+                <div style={styles.vkActions}>
+                    <button
+                        type="button"
+                        onClick={handleVKAuth}
+                        style={{ ...styles.button, ...styles.vkAuthButton }}
+                    >
+                        Открыть авторизацию VK
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleClearVkToken}
+                        style={{ ...styles.button, ...styles.clearButton }}
+                    >
+                        Очистить token
+                    </button>
+                </div>
+                <p style={styles.hint}>Авторизация открывается в новой вкладке.</p>
+                <input
+                    type="text"
+                    value={vkRedirectResultUrl}
+                    onChange={(e) => setVkRedirectResultUrl(e.target.value)}
+                    placeholder="Вставьте URL после редиректа VK (с access_token в hash)"
+                    style={styles.vkRedirectInput}
+                />
+                <button
+                    type="button"
+                    onClick={handleApplyVkTokenFromUrl}
+                    style={{ ...styles.button, ...styles.saveButton }}
+                >
+                    Сохранить token из URL
+                </button>
+                {vkAuthError && <div style={styles.error}>{vkAuthError}</div>}
+                <div style={vkToken ? styles.tokenStatusSuccess : styles.tokenStatusMuted}>
+                    {vkToken ? 'VK token сохранен в localStorage и готов к импорту.' : 'VK token пока не сохранен.'}
+                </div>
+            </div>
+            </div>
         </div>
     );
 }
@@ -122,9 +200,14 @@ const styles = {
         minHeight: '80vh',
         padding: '2rem',
     },
+    content: {
+        width: '100%',
+        maxWidth: '640px',
+        display: 'grid',
+        gap: '1rem',
+    },
     card: {
         width: '100%',
-        maxWidth: '480px',
         padding: '2rem',
         border: '1px solid #ddd',
         borderRadius: '8px',
@@ -171,6 +254,61 @@ const styles = {
         marginTop: '1.5rem',
         marginBottom: 0,
         textAlign: 'center',
+    },
+    vkActions: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.75rem',
+        marginTop: '1rem',
+        marginBottom: '0.5rem',
+    },
+    button: {
+        border: 'none',
+        borderRadius: '8px',
+        color: '#fff',
+        padding: '0.7rem 1.2rem',
+        fontSize: '0.95rem',
+        fontWeight: 600,
+        cursor: 'pointer',
+    },
+    vkAuthButton: {
+        backgroundColor: '#4680C2',
+    },
+    clearButton: {
+        backgroundColor: '#64748b',
+    },
+    saveButton: {
+        marginTop: '0.75rem',
+        backgroundColor: '#2f855a',
+    },
+    vkRedirectInput: {
+        marginTop: '0.75rem',
+        width: '100%',
+        padding: '0.75rem 0.9rem',
+        border: '1px solid #d0d7de',
+        borderRadius: '8px',
+        fontSize: '0.95rem',
+    },
+    hint: {
+        margin: '0.5rem 0 0',
+        color: '#7f8c8d',
+        fontSize: '0.9rem',
+    },
+    tokenStatusSuccess: {
+        marginTop: '0.75rem',
+        padding: '0.7rem 0.9rem',
+        borderRadius: '6px',
+        backgroundColor: '#e6fffa',
+        color: '#22543d',
+        fontSize: '0.9rem',
+    },
+    tokenStatusMuted: {
+        marginTop: '0.75rem',
+        padding: '0.7rem 0.9rem',
+        borderRadius: '6px',
+        backgroundColor: '#f1f5f9',
+        color: '#475569',
+        fontSize: '0.9rem',
     },
 };
 
