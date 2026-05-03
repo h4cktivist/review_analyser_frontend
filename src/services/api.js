@@ -78,14 +78,21 @@ const refreshAccessToken = async () => {
     }
 };
 
+const setAuthHeader = (headers, token) => {
+    if (!headers || !token) return;
+    if (typeof headers.set === 'function') {
+        headers.set('Authorization', `Bearer ${token}`);
+    } else {
+        headers.Authorization = `Bearer ${token}`;
+    }
+};
+
 api.interceptors.request.use(
     (config) => {
         const { access } = getTokens();
-
         if (access) {
-            config.headers.Authorization = `Bearer ${access}`;
+            setAuthHeader(config.headers, access);
         }
-
         return config;
     },
     (error) => {
@@ -106,7 +113,7 @@ api.interceptors.response.use(
                     failedQueue.push({ resolve, reject });
                 })
                     .then(token => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        setAuthHeader(originalRequest.headers, token);
                         return api(originalRequest);
                     })
                     .catch(err => {
@@ -120,7 +127,7 @@ api.interceptors.response.use(
             try {
                 const newAccessToken = await refreshAccessToken();
 
-                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                setAuthHeader(originalRequest.headers, newAccessToken);
 
                 processQueue(null, newAccessToken);
 
@@ -276,7 +283,13 @@ export const importAPI = {
             institution_id: institutionId
         });
         return response.data;
-    }
+    },
+
+    /** GET /import-tasks/:task_id/ — PENDING | STARTED | SUCCESS | FAILURE */
+    getImportTask: async (taskId) => {
+        const response = await api.get(`/import-tasks/${taskId}/`);
+        return response.data;
+    },
 };
 
 export default api;

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getVkAccessToken, importAPI, institutionsAPI, reviewsAPI } from '../../services/api';
 
 function InstitutionDetail() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const [institution, setInstitution] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [latestReviews, setLatestReviews] = useState([]); // Последние 3 отзыва
@@ -19,7 +18,9 @@ function InstitutionDetail() {
         otzovik: false,
         ok: false,
     });
-    const [importResult, setImportResult] = useState(null);
+    /** После 202 Accepted: message, task_id, status_url с бэкенда */
+    const [importQueued, setImportQueued] = useState(null);
+    const [importError, setImportError] = useState('');
     const [vkAuthError, setVkAuthError] = useState('');
 
     useEffect(() => {
@@ -54,96 +55,66 @@ function InstitutionDetail() {
         fetchInstitutionData();
     }, [id]);
 
+    const sourceToLoadingKey = {
+        '2GIS': 'gis',
+        Yandex: 'yandex',
+        Telegram: 'tg',
+        VK: 'vk',
+        Otzovik: 'otzovik',
+        OK: 'ok',
+    };
+
+    const anyImportLoading = Object.values(importLoading).some(Boolean);
+
     const handleImport = async (source) => {
+        const key = sourceToLoadingKey[source];
         try {
-            setImportResult(null);
+            setImportQueued(null);
+            setImportError('');
+            setImportLoading(prev => ({ ...prev, [key]: true }));
 
-            if (source === '2GIS') {
-                setImportLoading(prev => ({ ...prev, gis: true }));
-                const response = await importAPI.importGISReviews(id);
-                setImportResult({
-                    source: source,
-                    importedCount: response.imported_reviews.length,
-                    totalCount: reviews.length + response.imported_reviews.length
-                });
-            }
-            else if (source === 'Yandex') {
-                setImportLoading(prev => ({ ...prev, yandex: true }));
-                const response = await importAPI.importYandexReviews(id);
-                setImportResult({
-                    source: source,
-                    importedCount: response.imported_reviews.length,
-                    totalCount: reviews.length + response.imported_reviews.length
-                });
-            }
-            else if (source === 'Telegram') {
-                setImportLoading(prev => ({ ...prev, tg: true }));
-                const response = await importAPI.importTelegramReviews(id);
-                setImportResult({
-                    source: source,
-                    importedCount: response.imported_reviews.length,
-                    totalCount: reviews.length + response.imported_reviews.length
-                });
-            }
-            else if (source === 'VK') {
-                setImportLoading(prev => ({ ...prev, vk: true }));
+            if (source === 'VK') {
                 const token = getVkAccessToken();
-
                 if (!token) {
                     setVkAuthError('Сначала сохраните VK token на странице профиля.');
                     return;
                 }
-
                 setVkAuthError('');
-                const response = await importAPI.importVKReviews(id, token);
-                setImportResult({
-                    source: source,
-                    importedCount: response.imported_reviews.length,
-                    totalCount: reviews.length + response.imported_reviews.length
-                });
-            }
-            else if (source === 'Otzovik') {
-                setImportLoading(prev => ({ ...prev, otzovik: true }));
-                const response = await importAPI.importOtzovikReviews(id);
-                setImportResult({
-                    source: source,
-                    importedCount: response.imported_reviews.length,
-                    totalCount: reviews.length + response.imported_reviews.length
-                });
-            }
-            else if (source === 'OK') {
-                setImportLoading(prev => ({ ...prev, ok: true }));
-                const response = await importAPI.importOKReviews(id);
-                setImportResult({
-                    source: source,
-                    importedCount: response.imported_reviews.length,
-                    totalCount: reviews.length + response.imported_reviews.length
-                });
             }
 
-            const allReviews = await reviewsAPI.getAll();
-            const institutionReviews = allReviews.filter(
-                review => review.institution === parseInt(id)
-            );
-            setReviews(institutionReviews);
+            let response;
+            if (source === '2GIS') {
+                response = await importAPI.importGISReviews(id);
+            } else if (source === 'Yandex') {
+                response = await importAPI.importYandexReviews(id);
+            } else if (source === 'Telegram') {
+                response = await importAPI.importTelegramReviews(id);
+            } else if (source === 'VK') {
+                response = await importAPI.importVKReviews(id, getVkAccessToken());
+            } else if (source === 'Otzovik') {
+                response = await importAPI.importOtzovikReviews(id);
+            } else if (source === 'OK') {
+                response = await importAPI.importOKReviews(id);
+            } else {
+                return;
+            }
 
-            const sortedReviews = [...institutionReviews].sort((a, b) =>
-                new Date(b.reviewed_at) - new Date(a.reviewed_at)
-            );
-            setLatestReviews(sortedReviews.slice(0, 3));
-
+            setImportQueued({
+                message: response.message,
+                taskId: response.task_id,
+                source,
+            });
         } catch (err) {
-            setError(`Ошибка импорта отзывов из ${source}`);
+            const detail = err.response?.data?.detail ?? err.response?.data?.message;
+            setImportError(
+                detail
+                    ? `Ошибка импорта (${source}): ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`
+                    : `Ошибка импорта отзывов из ${source}`
+            );
             console.error('Import error:', err);
         } finally {
-            setImportLoading(prev =>
-                ({ ...prev, gis: false, yandex: false, tg: false, vk: false, otzovik: false, ok: false })
-            );
+            setImportLoading(prev => ({ ...prev, [key]: false }));
         }
-    };
-
-    const handleViewReviews = () => {
-        navigate('/reviews');
     };
 
     const getSentimentColor = (sentiment) => {
@@ -367,11 +338,12 @@ function InstitutionDetail() {
                                 Загрузите последние отзывы из внешних источников
                             </p>
                             {vkAuthError && <div style={styles.vkAuthError}>{vkAuthError}</div>}
+                            {importError && <div style={styles.importError}>{importError}</div>}
 
                             <div style={styles.importButtons}>
                                 <button
                                     onClick={() => handleImport('2GIS')}
-                                    disabled={importLoading.gis || importLoading.yandex}
+                                    disabled={anyImportLoading}
                                     style={styles.importButton}
                                 >
                                     {importLoading.gis ? (
@@ -386,7 +358,7 @@ function InstitutionDetail() {
 
                                 <button
                                     onClick={() => handleImport('Yandex')}
-                                    disabled={importLoading.gis || importLoading.yandex}
+                                    disabled={anyImportLoading}
                                     style={styles.importButton}
                                 >
                                     {importLoading.yandex ? (
@@ -401,7 +373,7 @@ function InstitutionDetail() {
 
                                 <button
                                     onClick={() => handleImport('Telegram')}
-                                    disabled={importLoading.gis || importLoading.yandex}
+                                    disabled={anyImportLoading}
                                     style={styles.importButton}
                                 >
                                     {importLoading.tg ? (
@@ -416,7 +388,7 @@ function InstitutionDetail() {
 
                                 <button
                                     onClick={() => handleImport('VK')}
-                                    disabled={importLoading.gis || importLoading.yandex}
+                                    disabled={anyImportLoading}
                                     style={styles.importButton}
                                 >
                                     {importLoading.vk ? (
@@ -431,7 +403,7 @@ function InstitutionDetail() {
 
                                 <button
                                     onClick={() => handleImport('Otzovik')}
-                                    disabled={importLoading.gis || importLoading.yandex}
+                                    disabled={anyImportLoading}
                                     style={styles.importButton}
                                 >
                                     {importLoading.otzovik ? (
@@ -446,7 +418,7 @@ function InstitutionDetail() {
 
                                 <button
                                     onClick={() => handleImport('OK')}
-                                    disabled={importLoading.gis || importLoading.yandex}
+                                    disabled={anyImportLoading}
                                     style={styles.importButton}
                                 >
                                     {importLoading.ok ? (
@@ -460,30 +432,21 @@ function InstitutionDetail() {
                                 </button>
                             </div>
 
-                            {importResult && (
-                                <div style={styles.importResult}>
-                                    {importResult.importedCount > 0 ? (
-                                        <>
-                                            <div style={styles.resultSuccess}>
-                                                ✅ Успешно импортировано {importResult.importedCount} новых отзывов из {importResult.source}
-                                            </div>
-                                            <div style={styles.resultActions}>
-                                                <span style={styles.resultText}>
-                                                    Всего отзывов: {importResult.totalCount}
-                                                </span>
-                                                <button
-                                                    onClick={handleViewReviews}
-                                                    style={styles.viewButton}
-                                                >
-                                                    Посмотреть
-                                                </button>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div style={styles.importResult}>
-                                            ℹ️ Новых отзывов не найдено
-                                        </div>
-                                    )}
+                            {importQueued && (
+                                <div style={styles.importQueuedBox}>
+                                    <p style={styles.importQueuedMessage}>Начат импорт отзывов</p>
+                                    <p style={styles.importQueuedMeta}>
+                                        Источник: {importQueued.source}. Задача поставлена в очередь — импорт и
+                                        постобработка выполняются в фоновом режиме.
+                                    </p>
+                                    <div style={styles.importQueuedActions}>
+                                        <Link
+                                            to={`/import-tasks/${encodeURIComponent(importQueued.taskId)}`}
+                                            style={styles.statusLink}
+                                        >
+                                            Статус импорта
+                                        </Link>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -746,6 +709,56 @@ const styles = {
         backgroundColor: '#fff3cd',
         border: '1px solid #ffe69c',
         color: '#c0392b',
+        fontSize: '0.9rem',
+    },
+    importError: {
+        marginBottom: '1rem',
+        padding: '0.75rem',
+        borderRadius: '6px',
+        backgroundColor: '#ffeaea',
+        border: '1px solid #f5c6cb',
+        color: '#721c24',
+        fontSize: '0.9rem',
+    },
+    importQueuedBox: {
+        marginTop: '1.5rem',
+        padding: '1rem',
+        backgroundColor: '#e8f4fc',
+        border: '1px solid #b8daff',
+        borderRadius: '8px',
+    },
+    importQueuedMessage: {
+        marginTop: 0,
+        marginBottom: '0.75rem',
+        color: '#0c5460',
+        fontWeight: 'bold',
+    },
+    importQueuedMeta: {
+        marginTop: 0,
+        marginBottom: '1rem',
+        color: '#495057',
+        fontSize: '0.9rem',
+        lineHeight: 1.5,
+    },
+    importQueuedActions: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '0.75rem',
+        alignItems: 'center',
+    },
+    statusLink: {
+        color: '#3498db',
+        fontWeight: 'bold',
+        textDecoration: 'none',
+    },
+    refreshReviewsBtn: {
+        backgroundColor: '#fff',
+        color: '#3498db',
+        border: '1px solid #3498db',
+        padding: '0.5rem 1rem',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        fontWeight: 'bold',
         fontSize: '0.9rem',
     },
     importButton: {

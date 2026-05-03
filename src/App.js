@@ -12,6 +12,7 @@ import InstitutionDetail from "./components/Institutions/InstitutionDetail";
 import EventDetail from "./components/Events/EventDetail";
 import Dashboard from "./components/Dashboard/Dashboard";
 import Profile from "./components/Auth/Profile";
+import ImportTaskDetail from "./components/ImportTasks/ImportTaskDetail";
 
 // Компонент для защиты маршрутов
 const ProtectedRoute = ({ children }) => {
@@ -92,6 +93,14 @@ function App() {
                   element={
                       <ProtectedRoute>
                           <Profile />
+                      </ProtectedRoute>
+                  }
+              />
+              <Route
+                  path="/import-tasks/:taskId"
+                  element={
+                      <ProtectedRoute>
+                          <ImportTaskDetail />
                       </ProtectedRoute>
                   }
               />
