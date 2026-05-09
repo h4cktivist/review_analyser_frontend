@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { reviewsAPI, institutionsAPI, eventsAPI } from '../../services/api';
 
@@ -9,6 +9,10 @@ function ReviewDetail() {
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [highlightedAction, setHighlightedAction] = useState('');
+    const highlightTimerRef = useRef(null);
+    const reviewTextRef = useRef(null);
+    const highlightedWordRef = useRef(null);
 
     useEffect(() => {
         const fetchReviewData = async () => {
@@ -42,6 +46,33 @@ function ReviewDetail() {
         fetchReviewData();
     }, [id]);
 
+    useEffect(() => {
+        return () => {
+            if (highlightTimerRef.current) {
+                clearTimeout(highlightTimerRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!highlightedAction) return;
+
+        if (highlightedWordRef.current) {
+            highlightedWordRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+            return;
+        }
+
+        if (reviewTextRef.current) {
+            reviewTextRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+    }, [highlightedAction, review?.text]);
+
     const handleConfirmAction = async (actionWord, accepted) => {
         try {
             await reviewsAPI.confirmAction(id, actionWord, accepted);
@@ -61,6 +92,44 @@ function ReviewDetail() {
             console.error('Error confirming action:', err);
             alert('Ошибка при подтверждении действия');
         }
+    };
+
+    const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const handlePotentialWordClick = (actionWord) => {
+        const normalizedWord = actionWord.trim();
+        setHighlightedAction(normalizedWord);
+
+        if (highlightTimerRef.current) {
+            clearTimeout(highlightTimerRef.current);
+        }
+
+        highlightTimerRef.current = setTimeout(() => {
+            setHighlightedAction('');
+        }, 2500);
+    };
+
+    const renderReviewText = () => {
+        const text = review?.text || '';
+        const action = highlightedAction.trim();
+        if (!action) return text;
+
+        const regex = new RegExp(`(${escapeRegExp(action)})`, 'i');
+        const match = text.match(regex);
+        if (!match || typeof match.index !== 'number') return text;
+
+        const start = match.index;
+        const end = start + match[0].length;
+
+        return (
+            <>
+                {text.slice(0, start)}
+                <mark ref={highlightedWordRef} style={styles.highlightedWord}>
+                    {text.slice(start, end)}
+                </mark>
+                {text.slice(end)}
+            </>
+        );
     };
 
     const getSentimentColor = (sentiment) => {
@@ -131,7 +200,7 @@ function ReviewDetail() {
 
                 <div style={styles.content}>
                     <h3 style={styles.reviewTitle}>Текст отзыва:</h3>
-                    <p style={styles.reviewText}>{review.text}</p>
+                    <p ref={reviewTextRef} style={styles.reviewText}>{renderReviewText()}</p>
                 </div>
 
                 {review.positive_aspects || review.negative_aspects || review.required_actions || review.potential_actions ? (
@@ -163,7 +232,12 @@ function ReviewDetail() {
                         <div style={styles.potentialList}>
                             {review.potential_actions.map((action, index) => (
                                 <div key={`potential-confirm-${index}`} style={styles.potentialItem}>
-                                    <span style={styles.potentialWord}>"{action.trim()}"</span>
+                                    <span
+                                        style={styles.potentialWord}
+                                        onClick={() => handlePotentialWordClick(action)}
+                                    >
+                                        "{action.trim()}"
+                                    </span>
                                     <div style={styles.potentialButtons}>
                                         <button style={styles.btnYes} onClick={() => handleConfirmAction(action.trim(), true)}>Да</button>
                                         <button style={styles.btnNo} onClick={() => handleConfirmAction(action.trim(), false)}>Нет</button>
@@ -266,6 +340,13 @@ const styles = {
         color: '#34495e',
         whiteSpace: 'pre-wrap',
     },
+    highlightedWord: {
+        backgroundColor: '#fde68a',
+        color: '#78350f',
+        borderRadius: '4px',
+        padding: '0 2px',
+        transition: 'background-color 0.3s ease',
+    },
     keywordsSection: {
         marginBottom: '2rem',
         padding: '1rem',
@@ -343,7 +424,8 @@ const styles = {
     potentialWord: {
         fontWeight: 'bold',
         color: '#333',
-        fontSize: '1rem'
+        fontSize: '1rem',
+        cursor: 'pointer'
     },
     potentialButtons: {
         display: 'flex',
