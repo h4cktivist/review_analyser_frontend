@@ -101,6 +101,21 @@ function EventDetail() {
                 <h1 style={styles.title}>{event.name}</h1>
             </div>
 
+            <div style={styles.eventFacts}>
+                <div style={styles.eventFact}>
+                    <span style={styles.eventFactLabel}>Дата:</span>{' '}
+                    {new Date(event.date).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                    })}
+                </div>
+                <div style={styles.eventFact}>
+                    <span style={styles.eventFactLabel}>Аренда:</span>{' '}
+                    {event.is_rent ? 'да' : 'нет'}
+                </div>
+            </div>
+
             <div style={styles.mainInfo}>
                 <div style={styles.statsCard}>
                     <h3 style={styles.infoTitle}>Статистика</h3>
@@ -226,6 +241,21 @@ const styles = {
         color: '#2c3e50',
         fontSize: '2.5rem',
         margin: 0,
+    },
+    eventFacts: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '1.5rem',
+        marginBottom: '1.5rem',
+        fontSize: '1rem',
+        color: '#34495e',
+    },
+    eventFact: {
+        margin: 0,
+    },
+    eventFactLabel: {
+        fontWeight: '600',
+        color: '#7f8c8d',
     },
     mainInfo: {
         display: 'grid',

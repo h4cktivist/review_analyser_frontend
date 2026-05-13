@@ -90,6 +90,7 @@ function EventList() {
                     <tr>
                         <th style={styles.th}>Название</th>
                         <th style={styles.th}>Дата</th>
+                        <th style={styles.th}>Аренда</th>
                         {isAdmin === "true" && (
                             <th style={styles.th}>Действия</th>
                         )}
@@ -109,6 +110,9 @@ function EventList() {
                                     month: 'long',
                                     year: 'numeric'
                                 })}
+                            </td>
+                            <td style={styles.td}>
+                                {event.is_rent ? 'Да' : 'Нет'}
                             </td>
                             {isAdmin === "true" && (
                                 <td style={styles.td}>

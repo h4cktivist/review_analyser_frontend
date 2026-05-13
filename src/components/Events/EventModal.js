@@ -5,6 +5,7 @@ function EventModal({ isOpen, onClose, existingEvent, onSave }) {
     const [formData, setFormData] = useState({
         name: '',
         date: '',
+        is_rent: false,
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -14,21 +15,23 @@ function EventModal({ isOpen, onClose, existingEvent, onSave }) {
             setFormData({
                 name: existingEvent.name || '',
                 date: existingEvent.date || '',
+                is_rent: Boolean(existingEvent.is_rent),
             });
         } else {
             setFormData({
                 name: '',
                 date: '',
+                is_rent: false,
             });
         }
         setError('');
     }, [existingEvent, isOpen]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: type === 'checkbox' ? checked : value
         }));
     };
 
@@ -109,6 +112,19 @@ function EventModal({ isOpen, onClose, existingEvent, onSave }) {
                             required
                             style={styles.input}
                         />
+                    </div>
+
+                    <div style={styles.formGroup}>
+                        <label style={styles.checkboxLabel}>
+                            <input
+                                type="checkbox"
+                                name="is_rent"
+                                checked={formData.is_rent}
+                                onChange={handleChange}
+                                style={styles.checkbox}
+                            />
+                            Арендное мероприятие
+                        </label>
                     </div>
 
                     <div style={styles.footer}>
@@ -209,6 +225,19 @@ const styles = {
         borderRadius: '6px',
         fontSize: '1rem',
         transition: 'border-color 0.2s',
+    },
+    checkboxLabel: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontWeight: '600',
+        color: '#2c3e50',
+        cursor: 'pointer',
+    },
+    checkbox: {
+        width: '1.1rem',
+        height: '1.1rem',
+        cursor: 'pointer',
     },
     footer: {
         display: 'flex',

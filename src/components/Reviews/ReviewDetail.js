@@ -264,6 +264,9 @@ function ReviewDetail() {
                         <div style={styles.metadataItem}>
                             <strong>Мероприятие:</strong>{' '}
                             <span style={styles.eventName}>{event.name}</span>
+                            <span style={styles.eventType}>
+                                {event.is_rent ? '(аренда)' : ''}
+                            </span>
                         </div>
                     )}
 
@@ -464,6 +467,9 @@ const styles = {
     link: {
         color: '#3498db',
         textDecoration: 'none',
+    },
+    eventName: {
+        fontWeight: '500',
     },
     eventType: {
         color: '#7f8c8d',

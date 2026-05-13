@@ -305,7 +305,7 @@ function ReviewList() {
                         <option value="">Все</option>
                         {events.map(e => (
                             <option key={e.id} value={e.id}>
-                                {e.name}
+                                {e.name}{e.is_rent ? ' (аренда)' : ''}
                             </option>
                         ))}
                     </select>
