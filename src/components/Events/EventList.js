@@ -12,6 +12,9 @@ function EventList() {
     const [editingEvent, setEditingEvent] = useState(null);
     const [eventToDelete, setEventToDelete] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [syncLoading, setSyncLoading] = useState(false);
+    const [syncMessage, setSyncMessage] = useState('');
+    const [syncError, setSyncError] = useState('');
     const isAdmin = localStorage.getItem('is_admin');
 
     useEffect(() => {
@@ -72,6 +75,22 @@ function EventList() {
         setEditingEvent(null);
     };
 
+    const handleSyncFromAfisha = async () => {
+        try {
+            setSyncLoading(true);
+            setSyncError('');
+            setSyncMessage('');
+            await eventsAPI.syncFromAfisha();
+            setSyncMessage('Актуализация мероприятий запущена');
+            await fetchEvents();
+        } catch (err) {
+            setSyncError('Ошибка запуска актуализации мероприятий');
+            console.error('Events sync error:', err);
+        } finally {
+            setSyncLoading(false);
+        }
+    };
+
     if (loading) return <div style={styles.loading}>Загрузка...</div>;
     if (error) return <div style={styles.error}>{error}</div>;
 
@@ -79,10 +98,25 @@ function EventList() {
         <div style={styles.container}>
             <div style={styles.header}>
                 <h2>Мероприятия</h2>
-                <button onClick={handleAddEvent} style={styles.addButton}>
-                    + Добавить мероприятие
-                </button>
+                <div style={styles.headerActions}>
+                    <button
+                        onClick={handleSyncFromAfisha}
+                        style={{
+                            ...styles.syncButton,
+                            ...(syncLoading ? styles.syncButtonDisabled : {}),
+                        }}
+                        disabled={syncLoading}
+                    >
+                        {syncLoading ? 'Актуализация...' : '↻ Актуализировать с афиши'}
+                    </button>
+                    <button onClick={handleAddEvent} style={styles.addButton}>
+                        + Добавить мероприятие
+                    </button>
+                </div>
             </div>
+
+            {syncMessage && <div style={styles.syncMessage}>{syncMessage}</div>}
+            {syncError && <div style={styles.syncError}>{syncError}</div>}
 
             <div style={styles.tableContainer}>
                 <table style={styles.table}>
@@ -203,6 +237,11 @@ const styles = {
         padding: '2rem',
         fontSize: '1.2rem',
     },
+    headerActions: {
+        display: 'flex',
+        gap: '0.75rem',
+        flexWrap: 'wrap',
+    },
     addButton: {
         backgroundColor: '#27ae60',
         color: 'white',
@@ -214,6 +253,28 @@ const styles = {
         fontWeight: '600',
         textDecoration: 'none',
         display: 'inline-block',
+    },
+    syncButton: {
+        backgroundColor: '#3498db',
+        color: 'white',
+        border: 'none',
+        padding: '0.75rem 1.5rem',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        fontSize: '1rem',
+        fontWeight: '600',
+    },
+    syncButtonDisabled: {
+        opacity: 0.7,
+        cursor: 'not-allowed',
+    },
+    syncMessage: {
+        color: '#27ae60',
+        marginBottom: '1rem',
+    },
+    syncError: {
+        color: '#e74c3c',
+        marginBottom: '1rem',
     },
     editButton: {
         background: 'none',

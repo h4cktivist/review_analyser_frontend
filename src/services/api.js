@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:8000/api';
+const EVENTS_SYNC_URL = 'http://localhost:8002';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -216,6 +217,11 @@ export const eventsAPI = {
 
     delete: async (id) => {
         const response = await api.delete(`/events/${id}/`);
+        return response.data;
+    },
+
+    syncFromAfisha: async () => {
+        const response = await axios.post(`${EVENTS_SYNC_URL}/run`);
         return response.data;
     },
 };
